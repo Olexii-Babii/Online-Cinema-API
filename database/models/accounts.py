@@ -21,7 +21,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from security.passwords import hash_password, verify_password
 from security.generate_token import generate_secure_token
 
-from database.engine import Base
+from database.models.base import Base
 
 
 class UserGroupEnum(str, enum.Enum):
