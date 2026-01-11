@@ -191,3 +191,54 @@ async def password_reset_request(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred during password reset request.",
         )
+
+
+@router.post("/reset-password/complete/", response_model=schemas.MessageResponseSchema)
+async def reset_password_complete(
+        data: schemas.PasswordResetCompleteRequestSchema,
+        background_tasks: BackgroundTasks,
+        db: AsyncSession = Depends(get_db),
+):
+
+    db_user = await db.scalar(select(UserModel).where(UserModel.email == data.email))
+    db_token = await db.scalar(select(PasswordResetTokenModel).where(PasswordResetTokenModel.token == data.token))
+
+    if not db_user or not db_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email or token."
+        )
+
+    if db_token:
+        expires_at = cast(datetime, db_token.expires_at).replace(tzinfo=timezone.utc)
+
+    if (
+        not db_token
+        or db_user.id != db_token.user_id
+        or expires_at <= datetime.now(timezone.utc)
+    ):
+        await db.execute(
+            delete(PasswordResetTokenModel).where(
+                PasswordResetTokenModel.user_id == db_user.id
+            )
+        )
+        await db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email or token."
+        )
+
+    try:
+        db_user.password = data.password
+        await db.execute(
+            delete(PasswordResetTokenModel).where(
+                PasswordResetTokenModel.user_id == db_user.id
+            )
+        )
+        await db.commit()
+        return {"message": "Password reset successfully."}
+
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while resetting the password.",
+        )

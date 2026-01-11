@@ -50,21 +50,21 @@ class EmailRequestSchema(BaseModel):
         return accounts_validators.validate_email(str(email))
 
 
-# class PasswordResetCompleteRequestSchema(BaseModel):
-#     email: EmailStr
-#     token: str
-#     password: str
-#
-#     @field_validator("email")
-#     @classmethod
-#     def validate_email(cls, email: EmailStr):
-#         return accounts_validators.validate_email(str(email))
-#
-#     @field_validator("password")
-#     @classmethod
-#     def validate_password(cls, password: str):
-#         return accounts_validators.validate_password_strength(password)
-#
+class PasswordResetCompleteRequestSchema(BaseModel):
+    email: EmailStr
+    token: str
+    password: str
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, email: EmailStr):
+        return accounts_validators.validate_email(str(email))
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, password: str):
+        return accounts_validators.validate_password_strength(password)
+
 #
 # class UserLoginResponseSchema(BaseModel):
 #     access_token: str
