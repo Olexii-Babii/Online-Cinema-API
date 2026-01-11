@@ -75,17 +75,17 @@ class PasswordWithOldResetRequestSchema(UserBase):
     def validate_password(cls, password: str):
         return accounts_validators.validate_password_strength(password)
 
-#
-# class UserLoginResponseSchema(BaseModel):
-#     access_token: str
-#     refresh_token: str
-#     token_type: str
-#
-#
-# class UserLoginRequestSchema(BaseModel):
-#     email: EmailStr
-#     password: str
-#
+
+class UserLoginResponseSchema(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
+
+
+class UserLoginRequestSchema(BaseModel):
+    email: EmailStr
+    password: str
+
 #
 # class TokenRefreshRequestSchema(BaseModel):
 #     refresh_token: str
