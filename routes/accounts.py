@@ -1,6 +1,7 @@
 from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from jose import JWTError, ExpiredSignatureError
 from sqlalchemy import select, delete
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -330,3 +331,45 @@ async def user_login(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while processing the request.",
         )
+
+
+@router.post("/refresh/", response_model=schemas.TokenRefreshResponseSchema)
+async def refresh_access_token(
+    refresh_token: schemas.TokenRefreshRequestSchema,
+    db: AsyncSession = Depends(get_db),
+    jwt_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
+):
+    try:
+        payload = jwt_manager.decode_refresh_token(refresh_token.refresh_token)
+    except (JWTError, ExpiredSignatureError):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Token has expired."
+        )
+
+    db_refresh_token = await db.scalar(
+        select(RefreshTokenModel).where(
+            RefreshTokenModel.token == refresh_token.refresh_token
+        )
+    )
+
+    if not db_refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token not found."
+        )
+
+    db_user = await db.scalar(select(UserModel).where(UserModel.id == db_refresh_token.user_id))
+
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
+        )
+    elif db_user.id != db_refresh_token.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
+        )
+
+    access_token = jwt_manager.create_access_token(
+        data={"email": db_user.email, "user_id": db_user.id}
+    )
+
+    return {"access_token": access_token}

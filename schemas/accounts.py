@@ -86,10 +86,10 @@ class UserLoginRequestSchema(BaseModel):
     email: EmailStr
     password: str
 
-#
-# class TokenRefreshRequestSchema(BaseModel):
-#     refresh_token: str
-#
-#
-# class TokenRefreshResponseSchema(BaseModel):
-#     access_token: str
+
+class TokenRefreshRequestSchema(BaseModel):
+    refresh_token: str
+
+
+class TokenRefreshResponseSchema(BaseModel):
+    access_token: str
