@@ -28,18 +28,18 @@ class UserRegistrationResponseSchema(UserBase):
         from_attributes = True
 
 
-# class BaseMessageSchema(BaseModel):
-#     message: str
-#
-#
-# class UserActivationRequestSchema(BaseModel):
-#     email: EmailStr
-#     token: str
+class BaseMessageSchema(BaseModel):
+    message: str
 
 
-# class MessageResponseSchema(BaseMessageSchema):
-#     pass
-#
+class UserActivationRequestSchema(BaseModel):
+    email: EmailStr
+    token: str
+
+
+class MessageResponseSchema(BaseMessageSchema):
+    pass
+
 #
 # class PasswordResetRequestSchema(BaseModel):
 #     email: EmailStr
