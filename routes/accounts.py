@@ -373,3 +373,20 @@ async def refresh_access_token(
     )
 
     return {"access_token": access_token}
+
+
+@router.post("/logout/", response_model=schemas.MessageResponseSchema, status_code=status.HTTP_200_OK)
+async def logout(
+        data: schemas.LogoutRequestSchema,
+        db: AsyncSession = Depends(get_db)
+):
+    db_token = await db.scalar(select(RefreshTokenModel).where(RefreshTokenModel.token == data.refresh_token))
+
+    if not db_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Refresh token not found."
+        )
+    await db.execute(delete(RefreshTokenModel).where(RefreshTokenModel.token == data.refresh_token))
+    await db.commit()
+    return {"message": "You have been logged out."}

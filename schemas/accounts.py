@@ -93,3 +93,7 @@ class TokenRefreshRequestSchema(BaseModel):
 
 class TokenRefreshResponseSchema(BaseModel):
     access_token: str
+
+
+class LogoutRequestSchema(BaseModel):
+    refresh_token: str
