@@ -1,8 +1,10 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 
+load_dotenv()
 
 class BaseAppSettings(BaseSettings):
     BASE_DIR: Path = Path(__file__).parent
