@@ -103,10 +103,54 @@ async def activate_user(
 
         return {"message": "User account activated successfully."}
 
-    except SQLAlchemyError:
+    except SQLAlchemyError as e:
+        print(f"Error: {e}")
         await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred during activation.",
         )
 
+@router.post("/resend-activation/", response_model=schemas.MessageResponseSchema)
+async def resend_activation_email(
+        background_tasks: BackgroundTasks,
+        data: schemas.EmailRequestSchema,
+        db: AsyncSession = Depends(get_db)
+):
+    db_user = await db.scalar(select(UserModel).where(UserModel.email == data.email))
+
+    if not db_user:
+        return {"message": "If the user exists, you will receive a token"}
+
+    if db_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User account is already active.",
+        )
+    db_token = await db.scalar(select(ActivationTokenModel).where(ActivationTokenModel.user_id == db_user.id))
+
+    if db_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token is already exists.",
+        )
+
+    try:
+        activation_token = ActivationTokenModel(
+            user_id=db_user.id,
+        )
+        db.add(activation_token)
+        await db.flush()
+        # background_tasks.add_task(email_sender.send_activation_email, activation_token.token, db_user.email)
+
+        await db.commit()
+
+        return {"message": "If the user exists, you will receive a token"}
+
+    except SQLAlchemyError as e:
+        print(f"Error: {e}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred during token creation.",
+        )

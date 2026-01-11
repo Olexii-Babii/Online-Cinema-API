@@ -40,16 +40,16 @@ class UserActivationRequestSchema(BaseModel):
 class MessageResponseSchema(BaseMessageSchema):
     pass
 
-#
-# class PasswordResetRequestSchema(BaseModel):
-#     email: EmailStr
-#
-#     @field_validator("email")
-#     @classmethod
-#     def validate_email(cls, email: EmailStr):
-#         return accounts_validators.validate_email(str(email))
-#
-#
+
+class EmailRequestSchema(BaseModel):
+    email: EmailStr
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, email: EmailStr):
+        return accounts_validators.validate_email(str(email))
+
+
 # class PasswordResetCompleteRequestSchema(BaseModel):
 #     email: EmailStr
 #     token: str
