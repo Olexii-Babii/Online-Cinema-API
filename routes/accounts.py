@@ -242,3 +242,35 @@ async def reset_password_complete(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while resetting the password.",
         )
+
+@router.post("/reset-password-with-old-one/", response_model=schemas.MessageResponseSchema)
+async def reset_password_complete(
+        data: schemas.PasswordWithOldResetRequestSchema,
+        db: AsyncSession = Depends(get_db),
+):
+    db_user = await db.scalar(select(UserModel).where(UserModel.email == data.email))
+
+    if not db_user or not db_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid email or password, or user is not active."
+        )
+
+    if not db_user.verify_password(data.old_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid email or password, or user is not active."
+        )
+
+    try:
+        db_user.password = data.new_password
+        db.add(db_user)
+        await db.commit()
+        return {"message": "Password reset successfully."}
+
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while resetting the password.",
+        )
