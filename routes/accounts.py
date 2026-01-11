@@ -5,7 +5,7 @@ from sqlalchemy import select, delete
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import UserModel, ActivationTokenModel, UserGroupModel
+from database import UserModel, ActivationTokenModel, UserGroupModel, PasswordResetTokenModel
 from database.engine import get_db
 from email_notification.email_sender import EmailSender
 from schemas import accounts as schemas
@@ -153,4 +153,41 @@ async def resend_activation_email(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred during token creation.",
+        )
+
+
+
+@router.post("/password-reset/request/", response_model=schemas.MessageResponseSchema)
+async def password_reset_request(
+        data: schemas.EmailRequestSchema,
+        background_tasks: BackgroundTasks,
+        db: AsyncSession = Depends(get_db)
+):
+    db_user = await db.scalar(select(UserModel).where(UserModel.email == data.email))
+
+    if not db_user or not db_user.is_active:
+        return {
+            "message": "If you are registered, you will receive an email with instructions."
+        }
+    try:
+        await db.execute(
+            delete(PasswordResetTokenModel).where(
+                PasswordResetTokenModel.user_id == db_user.id
+            )
+        )
+        token = PasswordResetTokenModel(user_id=db_user.id)
+        db.add(token)
+        await db.flush()
+        # background_tasks.add_task(email_sender.send_password_reset_email, email_to=db_user.email, token=token.token)
+        await db.commit()
+
+        return {
+            "message": "If you are registered, you will receive an email with instructions."
+        }
+
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred during password reset request.",
         )
