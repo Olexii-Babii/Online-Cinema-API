@@ -5,7 +5,7 @@ from sqlalchemy import select, delete
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import UserModel, ActivationTokenModel
+from database import UserModel, ActivationTokenModel, UserGroupModel
 from database.engine import get_db
 from email_notification.email_sender import EmailSender
 from schemas import accounts as schemas
@@ -28,12 +28,19 @@ async def register_user(user: schemas.UserRegistrationRequestSchema,
             status_code=status.HTTP_409_CONFLICT,
             detail=f"A user with this email {user.email} already exists."
         )
+    db_group = await db.scalar(select(UserGroupModel).where(UserGroupModel.name == "user"))
+
+    if not db_group:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Default user group not found."
+        )
 
     try:
         new_user = UserModel(
             email=user.email,
             password=user.password,
-            group_id=3
+            group_id=db_group.id
         )
         db.add(new_user)
         await db.flush()
