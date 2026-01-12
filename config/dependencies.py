@@ -1,6 +1,13 @@
-from fastapi import Depends
+from typing import Annotated, Optional
+
+from fastapi import Depends, Header, HTTPException, status
+from jose import ExpiredSignatureError, JWTError
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.settings import Settings
+from database import UserModel
+from database.engine import get_db
 from managing.jwt_manager import JWTAuthManager
 
 def get_settings():
@@ -13,3 +20,35 @@ def get_jwt_auth_manager(settings: Settings = Depends(get_settings)) -> JWTAuthM
         secret_key_refresh=settings.SECRET_KEY_REFRESH,
         algorithm=settings.JWT_SIGNING_ALGORITHM,
     )
+
+async def get_current_user(
+    authorization: Annotated[Optional[str], Header()] = None,
+    jwt_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
+    db: AsyncSession = Depends(get_db),
+):
+    if not authorization:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authorization header is missing",
+        )
+
+    try:
+        payload = jwt_manager.decode_access_token(authorization.split(" ")[1])
+
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired."
+        )
+
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Authorization header format. Expected 'Bearer <token>'",
+        )
+
+
+    token_user_id = payload.get("user_id")
+
+    db_user = await db.scalar(select(UserModel).where(UserModel.id == token_user_id))
+
+    return db_user
