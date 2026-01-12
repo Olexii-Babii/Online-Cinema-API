@@ -1,7 +1,7 @@
 from fastapi import Depends
 
 from config.settings import Settings
-from security.jwt_manager import JWTAuthManager
+from managing.jwt_manager import JWTAuthManager
 
 def get_settings():
     return Settings()

@@ -14,7 +14,7 @@ from schemas import accounts as schemas
 
 from typing import cast
 
-from security.jwt_manager import JWTAuthManager
+from managing.jwt_manager import JWTAuthManager
 
 router = APIRouter()
 email_sender = EmailSender()
