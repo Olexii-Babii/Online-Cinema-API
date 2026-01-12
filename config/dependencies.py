@@ -23,8 +23,8 @@ def get_jwt_auth_manager(settings: Settings = Depends(get_settings)) -> JWTAuthM
         algorithm=settings.JWT_SIGNING_ALGORITHM,
     )
 
-def get_s3_client():
-    return S3Client()
+def get_s3_client(settings: Settings = Depends(get_settings)):
+    return S3Client(settings)
 
 async def get_current_user(
     authorization: Annotated[Optional[str], Header()] = None,
