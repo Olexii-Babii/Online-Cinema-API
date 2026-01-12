@@ -9,6 +9,8 @@ from config.settings import Settings
 from database import UserModel
 from database.engine import get_db
 from managing.jwt_manager import JWTAuthManager
+from managing.s3_manager import S3Client
+
 
 def get_settings():
     return Settings()
@@ -20,6 +22,9 @@ def get_jwt_auth_manager(settings: Settings = Depends(get_settings)) -> JWTAuthM
         secret_key_refresh=settings.SECRET_KEY_REFRESH,
         algorithm=settings.JWT_SIGNING_ALGORITHM,
     )
+
+def get_s3_client():
+    return S3Client()
 
 async def get_current_user(
     authorization: Annotated[Optional[str], Header()] = None,
