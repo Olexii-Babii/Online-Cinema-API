@@ -1,4 +1,3 @@
-import datetime
 from typing import List
 
 from pydantic import BaseModel
@@ -8,9 +7,9 @@ from pydantic import BaseModel
 class MovieListItemSchema(BaseModel):
     id: int
     name: str
-    date: datetime.date
-    score: float
-    overview: str
+    year: int
+    time: int
+    imdb: float
 
 
 class MovieListResponseSchema(BaseModel):
