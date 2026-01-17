@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, ValidationError
 from sqlalchemy import DECIMAL
 
 
@@ -73,3 +73,63 @@ class MovieDetailSchema(BaseModel):
     directors: List[DirectorsResponseSchema]
 
 
+class MovieUpdateSchema(BaseModel):
+    name: Optional[str] = None
+    year: Optional[int] = None
+    time: Optional[int] = None
+    imdb: Optional[float] = None
+    votes: Optional[int] = None
+    meta_score: Optional[float] = None
+    gross: Optional[float] = None
+    description: Optional[str] = None
+    price: Optional[DECIMAL] = None
+
+
+    @field_validator("name")
+    @classmethod
+    def name_validation(cls, name: str | None):
+        if name is not None:
+            if len(name) > 255:
+                raise ValueError
+            return name
+
+    @field_validator("year")
+    @classmethod
+    def year_validation(cls, year: int | None):
+        if year is not None:
+            if year < 1900:
+                raise ValueError
+            return year
+
+    @field_validator("imdb")
+    @classmethod
+    def imdb_validation(cls, imdb: float | None):
+        if imdb is not None:
+            if not (imdb >= 0 and imdb <= 10):
+                raise ValueError
+            return imdb
+
+
+    @field_validator("time")
+    @classmethod
+    def time_validation(cls, time: int | None):
+        if time is not None:
+            if not time >= 0:
+                raise ValueError
+            return time
+
+    @field_validator("price")
+    @classmethod
+    def price_validation(cls, price: DECIMAL | None):
+        if price is not None:
+            if not price >= 0:
+                raise ValueError
+            return price
+
+    @field_validator("votes")
+    @classmethod
+    def votes_validation(cls, votes: int | None):
+        if votes is not None:
+            if not votes >= 0:
+                raise ValueError
+            return votes

@@ -8,7 +8,7 @@ from starlette import status
 
 from database.engine import get_db
 from database.models.movies import MovieModel, GenreModel, StarModel, DirectorModel, CertificationModel
-from schemas.movies import MovieListResponseSchema, MovieDetailSchema, MovieCreateSchema
+from schemas.movies import MovieListResponseSchema, MovieDetailSchema, MovieCreateSchema, MovieUpdateSchema
 
 router = APIRouter()
 
@@ -149,3 +149,23 @@ async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     await db.execute(delete(MovieModel).where(MovieModel.id == movie_id))
     await db.commit()
 
+@router.patch("/movies/{movie_id}/")
+async def update_movie(
+    movie_id: int, movie: MovieUpdateSchema, db: AsyncSession = Depends(get_db)
+):
+
+    db_movie = await check_exists_movie(db=db, movie_id=movie_id)
+
+
+    update_data = movie.model_dump(exclude_unset=True)
+
+    for field, value in update_data.items():
+        if field not in ("genres", "stars", "directors", "certification"):
+            setattr(db_movie, field, value)
+
+    await db.commit()
+    await db.refresh(
+        db_movie, attribute_names=["genres", "stars", "directors", "certification"]
+    )
+
+    return {"detail": "Movie updated successfully."}
