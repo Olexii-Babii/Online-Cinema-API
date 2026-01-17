@@ -2,7 +2,7 @@ import math
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
@@ -142,3 +142,10 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     await db.refresh(movie, ["genres", "stars", "directors", "certification"])
 
     return movie
+
+@router.delete("/movies/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
+    await check_exists_movie(db=db, movie_id=movie_id)
+    await db.execute(delete(MovieModel).where(MovieModel.id == movie_id))
+    await db.commit()
+
