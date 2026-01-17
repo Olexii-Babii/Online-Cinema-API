@@ -134,3 +134,11 @@ async def create_movie(movie: MovieCreateSchema, db: AsyncSession = Depends(get_
     )
 
     return new_movie
+
+@router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)
+async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
+    movie = await check_exists_movie(db=db, movie_id=movie_id)
+
+    await db.refresh(movie, ["genres", "stars", "directors", "certification"])
+
+    return movie
