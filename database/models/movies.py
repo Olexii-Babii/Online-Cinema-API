@@ -134,7 +134,7 @@ class MovieModel(Base):
     meta_score: Mapped[float] = mapped_column(Float, nullable=True)
     gross: Mapped[float] = mapped_column(Float, nullable=True)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    price: Mapped[float] = mapped_column(DECIMAL(10, 2), nullable=True)
+    price: Mapped[DECIMAL] = mapped_column(DECIMAL(10, 2), nullable=True)
     certification_id: Mapped[int] = mapped_column(ForeignKey("certifications.id"), nullable=False)
     certification: Mapped["CertificationModel"] = relationship(
         "CertificationModel", back_populates="movies"
