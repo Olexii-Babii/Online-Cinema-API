@@ -1,7 +1,7 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, field_validator, ValidationError
-from sqlalchemy import DECIMAL
+from pydantic import BaseModel, Field, field_validator
+from decimal import Decimal
 
 
 class CertificationResponseSchema(BaseModel):
@@ -49,7 +49,7 @@ class MovieCreateSchema(BaseModel):
     meta_score: Optional[float] = None
     gross: Optional[float] = None
     description: str
-    price: Optional[DECIMAL] = None
+    price: Optional[Decimal] = None
     certification: str
     genres: List[str]
     stars: List[str]
@@ -66,7 +66,7 @@ class MovieDetailSchema(BaseModel):
     meta_score: float
     gross: float
     description: str
-    price: DECIMAL
+    price: Decimal
     certification: CertificationResponseSchema
     genres: List[GenresResponseSchema]
     stars: List[StarsResponseSchema]
@@ -82,7 +82,7 @@ class MovieUpdateSchema(BaseModel):
     meta_score: Optional[float] = None
     gross: Optional[float] = None
     description: Optional[str] = None
-    price: Optional[DECIMAL] = None
+    price: Optional[Decimal] = None
 
 
     @field_validator("name")
@@ -120,7 +120,7 @@ class MovieUpdateSchema(BaseModel):
 
     @field_validator("price")
     @classmethod
-    def price_validation(cls, price: DECIMAL | None):
+    def price_validation(cls, price: Decimal | None):
         if price is not None:
             if not price >= 0:
                 raise ValueError
