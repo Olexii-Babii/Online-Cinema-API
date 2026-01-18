@@ -92,6 +92,10 @@ class UserModel(Base):
         "MovieReactionModel", back_populates="user"
     )
 
+    comments: Mapped[list["MovieCommentModel"]] = relationship(
+        "MovieCommentModel", back_populates="user"
+    )
+
     def __repr__(self):
         return f"<UserModel(id={self.id}, email={self.email}, is_active={self.is_active})>"
 

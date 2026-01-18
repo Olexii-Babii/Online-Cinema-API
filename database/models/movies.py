@@ -1,6 +1,7 @@
 import uuid as uuid_m
+from datetime import datetime
 from enum import Enum
-from sqlalchemy import Enum as SQLAlchemyEnum, Uuid
+from sqlalchemy import Enum as SQLAlchemyEnum, Uuid, DateTime, func
 
 from sqlalchemy import (
     String,
@@ -165,6 +166,10 @@ class MovieModel(Base):
         "MovieReactionModel", back_populates="movie"
     )
 
+    comments: Mapped[list["MovieCommentModel"]] = relationship(
+        "MovieCommentModel", back_populates="movie"
+    )
+
     __table_args__ = (UniqueConstraint("name", "year", "time", name="unique_movie_constraint"),)
 
     @classmethod
@@ -195,4 +200,27 @@ class MovieReactionModel(Base):
 
     __table_args__ = (
         UniqueConstraint("movie_id", "user_id", name="unique_user_movie_reaction"),
+    )
+
+
+class MovieCommentModel(Base):
+    __tablename__ = "movie_comments"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+    parent_id: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    movie_id: Mapped[int] = mapped_column(
+        ForeignKey("movies.id", ondelete="CASCADE")
+    )
+    movie: Mapped["MovieModel"] = relationship(
+        "MovieModel", back_populates="comments"
+    )
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE")
+    )
+    user: Mapped["UserModel"] = relationship(
+        "UserModel", back_populates="comments"
     )
