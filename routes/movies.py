@@ -29,7 +29,7 @@ async def check_exists_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     return movie
 
 
-@router.get("/movies/", response_model=MovieListResponseSchema)
+@router.get("/", response_model=MovieListResponseSchema)
 async def get_movies(
     page: Annotated[int, Query(ge=1)] = 1,
     per_page: Annotated[int, Query(ge=1, le=20)] = 10,
@@ -64,7 +64,7 @@ async def get_movies(
 
 
 @router.post(
-    "/movies/", response_model=MovieDetailSchema, status_code=status.HTTP_201_CREATED
+    "/", response_model=MovieDetailSchema, status_code=status.HTTP_201_CREATED
 )
 async def create_movie(movie: MovieCreateSchema, db: AsyncSession = Depends(get_db)):
     db_movie = await db.scalar(select(MovieModel).where(
@@ -139,7 +139,7 @@ async def create_movie(movie: MovieCreateSchema, db: AsyncSession = Depends(get_
 
     return new_movie
 
-@router.get("/movies/{movie_id}/", response_model=MovieDetailSchema)
+@router.get("/{movie_id}/", response_model=MovieDetailSchema)
 async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     movie = await check_exists_movie(db=db, movie_id=movie_id)
 
@@ -147,13 +147,13 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
 
     return movie
 
-@router.delete("/movies/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     await check_exists_movie(db=db, movie_id=movie_id)
     await db.execute(delete(MovieModel).where(MovieModel.id == movie_id))
     await db.commit()
 
-@router.patch("/movies/{movie_id}/")
+@router.patch("/{movie_id}/")
 async def update_movie(
     movie_id: int, movie: MovieUpdateSchema, db: AsyncSession = Depends(get_db)
 ):
@@ -175,7 +175,7 @@ async def update_movie(
     return {"detail": "Movie updated successfully."}
 
 @router.post(
-    "/movies/{movie_id}/reaction/", response_model=MessageResponseSchema
+    "/{movie_id}/reaction/", response_model=MessageResponseSchema
 )
 async def reaction(
         movie_id: int,
