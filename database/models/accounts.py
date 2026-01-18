@@ -16,7 +16,6 @@ from sqlalchemy import (
     UniqueConstraint
 )
 
-from database.models.movies import MovieReactionModel
 from database.validators import accounts as validators
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 

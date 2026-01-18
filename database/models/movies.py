@@ -1,6 +1,6 @@
-import uuid
+import uuid as uuid_m
 from enum import Enum
-from sqlalchemy import Enum as SQLAlchemyEnum
+from sqlalchemy import Enum as SQLAlchemyEnum, Uuid
 
 from sqlalchemy import (
     String,
@@ -14,7 +14,6 @@ from sqlalchemy import (
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from database import Base
-from database.models.accounts import UserModel
 
 
 class ReactionEnum(int, Enum):
@@ -134,7 +133,7 @@ class MovieModel(Base):
     __tablename__ = "movies"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    uuid: Mapped[uuid.UUID] = mapped_column(default=uuid.uuid4)
+    uuid: Mapped[uuid_m.UUID] = mapped_column(Uuid, default=uuid_m.uuid4)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     year: Mapped[int] = mapped_column(Integer, nullable=False)
     time: Mapped[int] = mapped_column(Integer, nullable=False)

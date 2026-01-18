@@ -8,3 +8,11 @@ from database.models.accounts import (
     RefreshTokenModel,
     UserProfileModel
 )
+from database.models.movies import (
+    MovieModel,
+    GenreModel,
+    StarModel,
+    DirectorModel,
+    CertificationModel,
+    MovieReactionModel,
+)
