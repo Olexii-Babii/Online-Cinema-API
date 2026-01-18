@@ -1,4 +1,6 @@
 import uuid
+from enum import Enum
+from sqlalchemy import Enum as SQLAlchemyEnum
 
 from sqlalchemy import (
     String,
@@ -12,6 +14,13 @@ from sqlalchemy import (
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
 from database import Base
+from database.models.accounts import UserModel
+
+
+class ReactionEnum(int, Enum):
+    LIKE = 1
+    DISLIKE = -1
+    NO_REACTION = 0
 
 
 MoviesGenresModel = Table(
@@ -153,6 +162,10 @@ class MovieModel(Base):
         "DirectorModel", secondary=MoviesDirectorsModel, back_populates="movies"
     )
 
+    reactions: Mapped[list["MovieReactionModel"]] = relationship(
+        "MovieReactionModel", back_populates="movie"
+    )
+
     __table_args__ = (UniqueConstraint("name", "year", "time", name="unique_movie_constraint"),)
 
     @classmethod
@@ -161,3 +174,26 @@ class MovieModel(Base):
 
     def __repr__(self):
         return f"<Movie(name='{self.name}', release_year='{self.year}', score_imdb={self.imdb})>"
+
+class MovieReactionModel(Base):
+    __tablename__ = "movie_reactions"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    value: Mapped[ReactionEnum] = mapped_column(SQLAlchemyEnum(ReactionEnum), nullable=False)
+    movie_id: Mapped[int] = mapped_column(
+        ForeignKey("movies.id", ondelete="CASCADE")
+    )
+    movie: Mapped["MovieModel"] = relationship(
+        "MovieModel", back_populates="reactions"
+    )
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE")
+    )
+    user: Mapped["UserModel"] = relationship(
+        "UserModel", back_populates="reactions"
+    )
+
+    __table_args__ = (
+        UniqueConstraint("movie_id", "user_id", name="unique_user_movie_reaction"),
+    )

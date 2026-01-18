@@ -15,6 +15,8 @@ from sqlalchemy import (
     Date,
     UniqueConstraint
 )
+
+from database.models.movies import MovieReactionModel
 from database.validators import accounts as validators
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
@@ -85,6 +87,10 @@ class UserModel(Base):
         "UserProfileModel",
         back_populates="user",
         cascade="all, delete-orphan"
+    )
+
+    reactions: Mapped[list["MovieReactionModel"]] = relationship(
+        "MovieReactionModel", back_populates="user"
     )
 
     def __repr__(self):
