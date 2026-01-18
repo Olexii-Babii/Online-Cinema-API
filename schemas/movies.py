@@ -1,3 +1,4 @@
+import datetime
 from typing import List, Optional
 
 from pydantic import BaseModel, Field, field_validator
@@ -144,3 +145,35 @@ class ReactionRequestSchema(BaseModel):
         if value not in (1, -1, 0):
             raise ValueError
         return value
+
+
+class CommentRequestSchema(BaseModel):
+    text: str
+
+
+class CommentResponseSchema(BaseModel):
+    id: int
+    text: str
+    user_id: int
+    movie_id: int
+    created_at: datetime.datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CommentReplyRequestSchema(BaseModel):
+    text: str
+    parent_id: int
+
+
+class CommentReplyResponseSchema(BaseModel):
+    id: int
+    text: str
+    user_id: int
+    movie_id: int
+    parent_id: int
+    created_at: datetime.datetime
+
+    class Config:
+        from_attributes = True

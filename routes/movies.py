@@ -9,10 +9,12 @@ from starlette import status
 from config.dependencies import get_current_user
 from database import UserModel, MovieReactionModel
 from database.engine import get_db
-from database.models.movies import MovieModel, GenreModel, StarModel, DirectorModel, CertificationModel
+from database.models.movies import MovieModel, GenreModel, StarModel, DirectorModel, CertificationModel, \
+    MovieCommentModel
 from schemas.accounts import MessageResponseSchema
 from schemas.movies import MovieListResponseSchema, MovieDetailSchema, MovieCreateSchema, MovieUpdateSchema, \
-    ReactionRequestSchema
+    ReactionRequestSchema, CommentRequestSchema, CommentResponseSchema, CommentReplyResponseSchema, \
+    CommentReplyRequestSchema
 
 router = APIRouter()
 
@@ -175,9 +177,9 @@ async def update_movie(
     return {"detail": "Movie updated successfully."}
 
 @router.post(
-    "/{movie_id}/reaction/", response_model=MessageResponseSchema
+    "/{movie_id}/add_reaction/", response_model=MessageResponseSchema
 )
-async def reaction(
+async def add_reaction(
         movie_id: int,
         data: ReactionRequestSchema,
         user: UserModel = Depends(get_current_user),
@@ -221,3 +223,52 @@ async def reaction(
     return {"message": f"You {reactions[data.value]} this movie."}
 
 
+@router.post("/{movie_id}/add_comment/", response_model=CommentResponseSchema)
+async def add_comment(
+        movie_id: int,
+        data: CommentRequestSchema,
+        user: UserModel = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db),
+):
+    await check_exists_movie(db=db, movie_id=movie_id)
+
+    db_comment = MovieCommentModel(
+        text=data.text,
+        user_id=user.id,
+        movie_id=movie_id,
+    )
+    db.add(db_comment)
+    await db.commit()
+    await db.refresh(db_comment)
+
+    return db_comment
+
+
+@router.post("/{movie_id}/add_comment/reply/", response_model=CommentReplyResponseSchema)
+async def reply_comment(
+        movie_id: int,
+        data: CommentReplyRequestSchema,
+        user: UserModel = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db),
+):
+    await check_exists_movie(db=db, movie_id=movie_id)
+
+    db_comment = await db.scalar(select(MovieCommentModel).where(MovieCommentModel.id == data.parent_id))
+
+    if not db_comment:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Comment does not exist."
+        )
+
+    new_comment = MovieCommentModel(
+        text=data.text,
+        user_id=user.id,
+        movie_id=movie_id,
+        parent_id=data.parent_id
+    )
+    db.add(new_comment)
+    await db.commit()
+    await db.refresh(new_comment)
+
+    return new_comment
