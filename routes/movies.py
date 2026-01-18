@@ -6,9 +6,13 @@ from sqlalchemy import select, func, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
+from config.dependencies import get_current_user
+from database import UserModel, MovieReactionModel
 from database.engine import get_db
 from database.models.movies import MovieModel, GenreModel, StarModel, DirectorModel, CertificationModel
-from schemas.movies import MovieListResponseSchema, MovieDetailSchema, MovieCreateSchema, MovieUpdateSchema
+from schemas.accounts import MessageResponseSchema
+from schemas.movies import MovieListResponseSchema, MovieDetailSchema, MovieCreateSchema, MovieUpdateSchema, \
+    ReactionRequestSchema
 
 router = APIRouter()
 
@@ -169,3 +173,51 @@ async def update_movie(
     )
 
     return {"detail": "Movie updated successfully."}
+
+@router.post(
+    "/movies/{movie_id}/reaction/", response_model=MessageResponseSchema
+)
+async def reaction(
+        movie_id: int,
+        data: ReactionRequestSchema,
+        user: UserModel = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db),
+):
+    reactions = {
+        1: "Liked",
+        -1: "Disliked",
+    }
+    await check_exists_movie(db=db, movie_id=movie_id)
+
+    if data.value == 0:
+        await db.execute(delete(MovieReactionModel).where(
+         MovieReactionModel.movie_id == movie_id,
+            MovieReactionModel.user_id == user.id
+            )
+        )
+        await db.commit()
+        return {"message": "You have successfully removed the reaction."}
+
+    db_reaction = await db.scalar(select(MovieReactionModel).where(
+        MovieReactionModel.movie_id == movie_id,
+        MovieReactionModel.user_id == user.id
+        )
+    )
+
+    if not db_reaction:
+        new_reaction = MovieReactionModel(
+            movie_id=movie_id,
+            user_id=user.id,
+            value=data.value
+        )
+        db.add(new_reaction)
+        await db.commit()
+
+        return {"message": f"You {reactions[data.value]} this movie."}
+
+    db_reaction.value = data.value
+    db.add(db_reaction)
+    await db.commit()
+    return {"message": f"You {reactions[data.value]} this movie."}
+
+

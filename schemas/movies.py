@@ -133,3 +133,14 @@ class MovieUpdateSchema(BaseModel):
             if not votes >= 0:
                 raise ValueError
             return votes
+
+
+class ReactionRequestSchema(BaseModel):
+    value: int
+
+    @field_validator("value")
+    @classmethod
+    def value_validation(cls, value: int):
+        if value not in (1, -1, 0):
+            raise ValueError
+        return value
