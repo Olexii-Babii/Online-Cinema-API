@@ -162,6 +162,10 @@ class MovieModel(Base):
         "DirectorModel", secondary=MoviesDirectorsModel, back_populates="movies"
     )
 
+    favorites: Mapped[list["FavoriteModel"]] = relationship(
+        "FavoriteModel", secondary="movie_favorites", back_populates="movies"
+    )
+
     reactions: Mapped[list["MovieReactionModel"]] = relationship(
         "MovieReactionModel", back_populates="movie"
     )

@@ -16,6 +16,7 @@ from sqlalchemy import (
     UniqueConstraint
 )
 
+from database.models.favorites import FavoriteModel
 from database.validators import accounts as validators
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
@@ -94,6 +95,10 @@ class UserModel(Base):
 
     comments: Mapped[list["MovieCommentModel"]] = relationship(
         "MovieCommentModel", back_populates="user"
+    )
+
+    favorite: Mapped[Optional["FavoriteModel"]] = relationship(
+        "FavoriteModel", back_populates="user", uselist=False
     )
 
     def __repr__(self):
