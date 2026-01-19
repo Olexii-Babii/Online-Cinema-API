@@ -16,3 +16,5 @@ from database.models.movies import (
     CertificationModel,
     MovieReactionModel,
 )
+
+from database.models.favorites import FavoriteModel

@@ -31,7 +31,7 @@ class FavoriteModel(Base):
     )
 
     user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id",), unique=True
+        ForeignKey("users.id", ondelete="CASCADE"), unique=True
     )
     user: Mapped["UserModel"] = relationship(
         "UserModel", back_populates="favorite"
