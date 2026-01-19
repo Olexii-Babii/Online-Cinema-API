@@ -1,22 +1,117 @@
 import math
 from typing import Annotated
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func, delete
+from sqlalchemy import select, func, delete, or_, Select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from config.dependencies import get_current_user
 from database import UserModel, MovieReactionModel
 from database.engine import get_db
-from database.models.movies import MovieModel, GenreModel, StarModel, DirectorModel, CertificationModel, \
+from database.models.movies import (
+    MovieModel,
+    GenreModel,
+    StarModel,
+    DirectorModel,
+    CertificationModel,
     MovieCommentModel
+)
 from schemas.accounts import MessageResponseSchema
-from schemas.movies import MovieListResponseSchema, MovieDetailSchema, MovieCreateSchema, MovieUpdateSchema, \
-    ReactionRequestSchema, CommentRequestSchema, CommentResponseSchema, CommentReplyResponseSchema, \
-    CommentReplyRequestSchema
+from schemas.movies import (
+    MovieListResponseSchema,
+    MovieDetailSchema,
+    MovieCreateSchema,
+    MovieUpdateSchema,
+    ReactionRequestSchema,
+    CommentRequestSchema,
+    CommentResponseSchema,
+    CommentReplyResponseSchema,
+    CommentReplyRequestSchema,
+    MovieFilterSchema
+)
 
 router = APIRouter()
+
+
+async def filtering_movie(query: Select, filters: MovieFilterSchema):
+    need_distinct = False
+
+    if filters.search:
+        search_term = f"%{filters.search}%"
+        query = query.where(
+            or_(
+                MovieModel.name.ilike(search_term),
+                MovieModel.description.ilike(search_term),
+                MovieModel.stars.any(StarModel.name.ilike(search_term)),
+                MovieModel.directors.any(DirectorModel.name.ilike(search_term))
+            )
+        )
+
+    if filters.genres:
+        genres = [genre.strip() for genre in filters.genres.split(",")]
+        query = query.join(MovieModel.genres).where(
+            GenreModel.name.in_(genres)
+    )
+        need_distinct = True
+
+    if filters.year:
+        query = query.where(MovieModel.year == filters.year)
+    else:
+        if filters.year_from:
+            query = query.where(MovieModel.year >= filters.year_from)
+        if filters.year_to:
+            query = query.where(MovieModel.year <= filters.year_to)
+
+
+    if filters.imdb_min:
+        query = query.where(MovieModel.imdb >= filters.imdb_min)
+    if filters.imdb_max:
+        query = query.where(MovieModel.imdb <= filters.imdb_max)
+
+
+    if filters.director:
+        query = query.join(MovieModel.directors).where(
+            DirectorModel.name.ilike(f"%{filters.director}%")
+        )
+        need_distinct = True
+
+
+    if filters.star:
+        query = query.join(MovieModel.stars).where(
+            StarModel.name.ilike(f"%{filters.star}%")
+        )
+        need_distinct = True
+
+
+    if filters.price_min:
+        query = query.where(MovieModel.price >= filters.price_min)
+    if filters.price_max:
+        query = query.where(MovieModel.price <= filters.price_max)
+
+    if need_distinct:
+        query = query.distinct()
+
+    return query
+
+
+async def sorting_movie(query: Select, filters: MovieFilterSchema):
+    sort_mapping = {
+        "name": MovieModel.name,
+        "year": MovieModel.year,
+        "imdb": MovieModel.imdb,
+        "price": MovieModel.price,
+    }
+
+    sort_column = sort_mapping.get(filters.sort_by.value, MovieModel.id)
+
+    if filters.order.value == "desc":
+        query = query.order_by(sort_column.desc())
+    else:
+        query = query.order_by(sort_column.asc())
+
+    return query
 
 
 async def check_exists_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
@@ -31,18 +126,41 @@ async def check_exists_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     return movie
 
 
+def build_url(
+        filters: MovieFilterSchema,
+        page: int,
+        per_page: int
+):
+    filters = filters.model_dump(exclude_none=True, mode="json")
+    filters["page"] = page
+    filters["per_page"] = per_page
+    return f"/movies/?{urlencode(filters)}"
+
+
+
 @router.get("/", response_model=MovieListResponseSchema)
 async def get_movies(
+    filters: MovieFilterSchema = Depends(),
     page: Annotated[int, Query(ge=1)] = 1,
     per_page: Annotated[int, Query(ge=1, le=20)] = 10,
     db: AsyncSession = Depends(get_db),
 ):
-    movies = await db.scalars(select(MovieModel))
+    query = select(MovieModel)
 
-    if not movies:
+    query = await filtering_movie(query=query, filters=filters)
+
+    count_query = select(func.count()).select_from(query.subquery())
+    count = await db.scalar(count_query)
+
+    if count == 0:
         raise HTTPException(status_code=404, detail="No movies found.")
 
-    count = await db.scalar(select(func.count(MovieModel.id)))
+    query = await sorting_movie(query=query, filters=filters)
+
+    query = query.offset((page - 1) * per_page).limit(per_page)
+
+    result = await db.execute(query)
+    movies = result.scalars().all()
 
     total_pages = math.ceil(count / per_page)
 
@@ -51,12 +169,12 @@ async def get_movies(
         "prev_page": (
             None
             if page == 1
-            else f"/theater/movies/?page={page - 1}&per_page={per_page}"
+            else build_url(filters=filters, per_page=per_page, page=page-1)
         ),
         "next_page": (
             None
             if page >= total_pages
-            else f"/theater/movies/?page={page + 1}&per_page={per_page}"
+            else build_url(filters=filters, per_page=per_page, page=page+1)
         ),
         "total_pages": total_pages,
         "total_items": count,

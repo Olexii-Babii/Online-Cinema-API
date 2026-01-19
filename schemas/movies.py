@@ -1,4 +1,5 @@
 import datetime
+from enum import Enum
 from typing import List, Optional
 
 from pydantic import BaseModel, Field, field_validator
@@ -177,3 +178,61 @@ class CommentReplyResponseSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class SortOrder(str, Enum):
+    ASC = "asc"
+    DESC = "desc"
+
+
+class MovieSortField(str, Enum):
+    NAME = "name"
+    PRICE = "price"
+    YEAR = "year"
+    IMDB = "imdb"
+
+
+
+class MovieFilterSchema(BaseModel):
+    search: Optional[str] = Field(None, min_length=1, max_length=100, description="Search by movie name")
+
+    genres: Optional[str] = Field(None, description="Filter by genres (comma-separated)")
+
+
+    year: Optional[int] = Field(None, ge=1900, le=2030, description="Exact year")
+    year_from: Optional[int] = Field(None, ge=1900, le=2030, description="Year from")
+    year_to: Optional[int] = Field(None, ge=1900, le=2030, description="Year to")
+
+    imdb_min: Optional[float] = Field(None, ge=0, le=10, description="Minimum IMDB rating")
+    imdb_max: Optional[float] = Field(None, ge=0, le=10, description="Maximum IMDB rating")
+
+
+    director: Optional[str] = Field(None, description="Filter by director name")
+
+    star: Optional[str] = Field(None, description="Filter by star name")
+
+    price_min: Optional[float] = Field(None, ge=0, description="Minimum price")
+    price_max: Optional[float] = Field(None, ge=0, description="Maximum price")
+
+    sort_by: Optional[MovieSortField] = Field(
+        MovieSortField.NAME,
+        description="Field to sort by"
+    )
+    order: SortOrder = Field(
+        SortOrder.DESC,
+        description="Sort order (asc or desc)"
+    )
+
+    @field_validator("year_to")
+    def validate_year_range(cls, v, values):
+        if v and "year_from" in values and values["year_from"]:
+            if v < values["year_from"]:
+                raise ValueError("year_to must be greater than or equal to year_from")
+        return v
+
+    @field_validator("imdb_max")
+    def validate_imdb_range(cls, v, values):
+        if v and "imdb_min" in values and values["imdb_min"]:
+            if v < values["imdb_min"]:
+                raise ValueError("imdb_max must be greater than or equal to imdb_min")
+        return v
