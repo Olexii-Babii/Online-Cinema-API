@@ -1,6 +1,5 @@
 import math
 from typing import Annotated
-from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func, delete, or_, Select
