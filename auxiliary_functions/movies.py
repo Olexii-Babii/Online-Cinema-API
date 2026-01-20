@@ -109,3 +109,15 @@ def build_url(
     filters["page"] = page
     filters["per_page"] = per_page
     return f"/movies/?{urlencode(filters)}"
+
+
+async def check_exists_genre(genre_id: int, db: AsyncSession = Depends(get_db)):
+    genre = await db.scalar(select(GenreModel).where(GenreModel.id == genre_id))
+
+    if not genre:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Genre with the given ID was not found.",
+        )
+
+    return genre
