@@ -1,10 +1,10 @@
 import math
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func, delete, or_, Select
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select, func, delete
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette import status
 from auxiliary_functions.movies import (
     build_url,
     check_exists_movie,
@@ -57,7 +57,7 @@ async def get_movies(
     count = await db.scalar(count_query)
 
     if count == 0:
-        raise HTTPException(status_code=404, detail="No movies found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No movies found.")
 
     query = await sorting_movie(query=query, filters=filters)
 
@@ -107,65 +107,74 @@ async def create_movie(
             detail=f"A movie with the name '{db_movie.name}', time '{db_movie.time}' and release year '{db_movie.year}' already exists.",
         )
 
-    list_models_names = [movie.genres, movie.stars, movie.directors]
-    list_models = [GenreModel, StarModel, DirectorModel]
-    result_list = []
-    for list_names, model in zip(list_models_names, list_models):
-        existing_objects = await db.scalars(
-            select(model).where(model.name.in_(list_names))
-        )
-        existing_objects = list(existing_objects)
-        if len(existing_objects) != len(list_names):
-            existing_names = {g.name for g in existing_objects}
-            new_names_to_create = [
-                name for name in list_names if name not in existing_names
-            ]
-            new_objects = []
-            for name in new_names_to_create:
-                object_ = model(name=name)
-                db.add(object_)
-                new_objects.append(object_)
+    try:
+        list_models_names = [movie.genres, movie.stars, movie.directors]
+        list_models = [GenreModel, StarModel, DirectorModel]
+        result_list = []
+        for list_names, model in zip(list_models_names, list_models):
+            existing_objects = await db.scalars(
+                select(model).where(model.name.in_(list_names))
+            )
+            existing_objects = list(existing_objects)
+            if len(existing_objects) != len(list_names):
+                existing_names = {g.name for g in existing_objects}
+                new_names_to_create = [
+                    name for name in list_names if name not in existing_names
+                ]
+                new_objects = []
+                for name in new_names_to_create:
+                    object_ = model(name=name)
+                    db.add(object_)
+                    new_objects.append(object_)
 
+                await db.flush()
+                result_list.append(existing_objects + new_objects)
+            else:
+                result_list.append(existing_objects)
+
+        certification = await db.scalar(
+            select(CertificationModel).where(CertificationModel.name == movie.certification)
+        )
+
+        if not certification:
+            certification = CertificationModel(
+                name=movie.certification,
+            )
+            db.add(certification)
             await db.flush()
-            result_list.append(existing_objects + new_objects)
-        else:
-            result_list.append(existing_objects)
 
-    certification = await db.scalar(
-        select(CertificationModel).where(CertificationModel.name == movie.certification)
-    )
 
-    if not certification:
-        certification = CertificationModel(
-            name=movie.certification,
+        new_movie = MovieModel(
+            name=movie.name,
+            year=movie.year,
+            time=movie.time,
+            imdb=movie.imdb,
+            votes=movie.votes,
+            meta_score=movie.meta_score,
+            gross=movie.gross,
+            description=movie.description,
+            price=movie.price,
+            certification=certification,
+            genres=result_list[0],
+            stars=result_list[1],
+            directors=result_list[2],
         )
-        db.add(certification)
-        await db.flush()
 
+        db.add(new_movie)
+        await db.commit()
+        await db.refresh(
+            new_movie, attribute_names=["genres", "stars", "directors", "certification"]
+        )
 
-    new_movie = MovieModel(
-        name=movie.name,
-        year=movie.year,
-        time=movie.time,
-        imdb=movie.imdb,
-        votes=movie.votes,
-        meta_score=movie.meta_score,
-        gross=movie.gross,
-        description=movie.description,
-        price=movie.price,
-        certification=certification,
-        genres=result_list[0],
-        stars=result_list[1],
-        directors=result_list[2],
-    )
+        return new_movie
 
-    db.add(new_movie)
-    await db.commit()
-    await db.refresh(
-        new_movie, attribute_names=["genres", "stars", "directors", "certification"]
-    )
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while creating movie."
+        )
 
-    return new_movie
 
 @router.get("/{movie_id}/", response_model=MovieDetailSchema)
 async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
@@ -182,8 +191,17 @@ async def delete_movie(
         current_user: UserModel = Depends(check_moder_or_admin)
 ):
     await check_exists_movie(db=db, movie_id=movie_id)
-    await db.execute(delete(MovieModel).where(MovieModel.id == movie_id))
-    await db.commit()
+    try:
+        await db.execute(delete(MovieModel).where(MovieModel.id == movie_id))
+        await db.commit()
+
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while deleting movie."
+        )
+
 
 @router.patch("/{movie_id}/")
 async def update_movie(
@@ -198,16 +216,24 @@ async def update_movie(
 
     update_data = movie.model_dump(exclude_unset=True)
 
-    for field, value in update_data.items():
-        if field not in ("genres", "stars", "directors", "certification"):
-            setattr(db_movie, field, value)
+    try:
+        for field, value in update_data.items():
+            if field not in ("genres", "stars", "directors", "certification"):
+                setattr(db_movie, field, value)
 
-    await db.commit()
-    await db.refresh(
-        db_movie, attribute_names=["genres", "stars", "directors", "certification"]
-    )
+        await db.commit()
+        await db.refresh(
+            db_movie, attribute_names=["genres", "stars", "directors", "certification"]
+        )
 
-    return {"detail": "Movie updated successfully."}
+        return {"detail": "Movie updated successfully."}
+
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while updating movie."
+        )
 
 @router.post(
     "/{movie_id}/add_reaction/", response_model=MessageResponseSchema
@@ -224,35 +250,43 @@ async def add_reaction(
     }
     await check_exists_movie(db=db, movie_id=movie_id)
 
-    if data.value == 0:
-        await db.execute(delete(MovieReactionModel).where(
-         MovieReactionModel.movie_id == movie_id,
+    try:
+        if data.value == 0:
+            await db.execute(delete(MovieReactionModel).where(
+             MovieReactionModel.movie_id == movie_id,
+                MovieReactionModel.user_id == user.id
+                )
+            )
+            await db.commit()
+            return {"message": "You have successfully removed the reaction."}
+
+        db_reaction = await db.scalar(select(MovieReactionModel).where(
+            MovieReactionModel.movie_id == movie_id,
             MovieReactionModel.user_id == user.id
             )
         )
+
+        if not db_reaction:
+            new_reaction = MovieReactionModel(
+                movie_id=movie_id,
+                user_id=user.id,
+                value=data.value
+            )
+            db.add(new_reaction)
+            await db.commit()
+
+            return {"message": f"You {reactions[data.value]} this movie."}
+
+        db_reaction.value = data.value
         await db.commit()
-        return {"message": "You have successfully removed the reaction."}
-
-    db_reaction = await db.scalar(select(MovieReactionModel).where(
-        MovieReactionModel.movie_id == movie_id,
-        MovieReactionModel.user_id == user.id
-        )
-    )
-
-    if not db_reaction:
-        new_reaction = MovieReactionModel(
-            movie_id=movie_id,
-            user_id=user.id,
-            value=data.value
-        )
-        db.add(new_reaction)
-        await db.commit()
-
         return {"message": f"You {reactions[data.value]} this movie."}
 
-    db_reaction.value = data.value
-    await db.commit()
-    return {"message": f"You {reactions[data.value]} this movie."}
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while adding reaction."
+        )
 
 
 @router.post("/{movie_id}/add_comment/", response_model=CommentResponseSchema)
@@ -264,16 +298,24 @@ async def add_comment(
 ):
     await check_exists_movie(db=db, movie_id=movie_id)
 
-    db_comment = MovieCommentModel(
-        text=data.text,
-        user_id=user.id,
-        movie_id=movie_id,
-    )
-    db.add(db_comment)
-    await db.commit()
-    await db.refresh(db_comment)
+    try:
+        db_comment = MovieCommentModel(
+            text=data.text,
+            user_id=user.id,
+            movie_id=movie_id,
+        )
+        db.add(db_comment)
+        await db.commit()
+        await db.refresh(db_comment)
 
-    return db_comment
+        return db_comment
+
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while adding comment."
+        )
 
 
 @router.post("/{movie_id}/add_comment/reply/", response_model=CommentReplyResponseSchema)
@@ -292,18 +334,25 @@ async def reply_comment(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Comment does not exist."
         )
+    try:
+        new_comment = MovieCommentModel(
+            text=data.text,
+            user_id=user.id,
+            movie_id=movie_id,
+            parent_id=data.parent_id
+        )
+        db.add(new_comment)
+        await db.commit()
+        await db.refresh(new_comment)
 
-    new_comment = MovieCommentModel(
-        text=data.text,
-        user_id=user.id,
-        movie_id=movie_id,
-        parent_id=data.parent_id
-    )
-    db.add(new_comment)
-    await db.commit()
-    await db.refresh(new_comment)
+        return new_comment
 
-    return new_comment
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while adding comment."
+        )
 
 
 @router.post(
@@ -317,32 +366,40 @@ async def add_rating(
 ):
     await check_exists_movie(db=db, movie_id=movie_id)
 
-    if data.value == 0:
-        await db.execute(delete(MovieRatingModel).where(
-         MovieRatingModel.movie_id == movie_id,
+    try:
+        if data.value == 0:
+            await db.execute(delete(MovieRatingModel).where(
+             MovieRatingModel.movie_id == movie_id,
+                MovieRatingModel.user_id == user.id
+                )
+            )
+            await db.commit()
+            return {"message": "You have successfully returned the movie rating."}
+
+        db_rating = await db.scalar(select(MovieRatingModel).where(
+            MovieRatingModel.movie_id == movie_id,
             MovieRatingModel.user_id == user.id
             )
         )
+
+        if not db_rating:
+            new_rating = MovieRatingModel(
+                movie_id=movie_id,
+                user_id=user.id,
+                value=data.value
+            )
+            db.add(new_rating)
+            await db.commit()
+
+            return {"message": f"You gave this movie a {data.value} rating."}
+
+        db_rating.value = data.value
         await db.commit()
-        return {"message": "You have successfully returned the movie rating."}
-
-    db_rating = await db.scalar(select(MovieRatingModel).where(
-        MovieRatingModel.movie_id == movie_id,
-        MovieRatingModel.user_id == user.id
-        )
-    )
-
-    if not db_rating:
-        new_rating = MovieRatingModel(
-            movie_id=movie_id,
-            user_id=user.id,
-            value=data.value
-        )
-        db.add(new_rating)
-        await db.commit()
-
         return {"message": f"You gave this movie a {data.value} rating."}
 
-    db_rating.value = data.value
-    await db.commit()
-    return {"message": f"You gave this movie a {data.value} rating."}
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while adding rating."
+        )
