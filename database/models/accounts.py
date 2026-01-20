@@ -41,7 +41,12 @@ class GenderEnum(str, enum.Enum):
 class UserGroupModel(Base):
     __tablename__ = "user_groups"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[UserGroupEnum] = mapped_column(Enum(UserGroupEnum), nullable=False, unique=True)
+    name: Mapped[UserGroupEnum] = mapped_column(
+        Enum(UserGroupEnum,
+            values_callable=lambda obj: [e.value for e in obj]),
+        nullable=False,
+        unique=True
+    )
 
     users: Mapped[List["UserModel"]] = relationship("UserModel", back_populates="group")
 

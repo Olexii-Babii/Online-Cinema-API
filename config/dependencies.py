@@ -4,6 +4,7 @@ from fastapi import Depends, Header, HTTPException, status
 from jose import ExpiredSignatureError, JWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from config.settings import Settings
 from database import UserModel
@@ -54,6 +55,8 @@ async def get_current_user(
 
     token_user_id = payload.get("user_id")
 
-    db_user = await db.scalar(select(UserModel).where(UserModel.id == token_user_id))
+    db_user = await db.scalar(select(UserModel)
+                              .options(selectinload(UserModel.group))
+                              .where(UserModel.id == token_user_id))
 
     return db_user
