@@ -21,7 +21,7 @@ from database.models.movies import (
     StarModel,
     DirectorModel,
     CertificationModel,
-    MovieCommentModel
+    MovieCommentModel, MovieRatingModel
 )
 from schemas.accounts import MessageResponseSchema
 from schemas.movies import (
@@ -34,7 +34,7 @@ from schemas.movies import (
     CommentResponseSchema,
     CommentReplyResponseSchema,
     CommentReplyRequestSchema,
-    MovieFilterSchema
+    MovieFilterSchema, RatingRequestSchema
 )
 
 router = APIRouter()
@@ -239,7 +239,6 @@ async def add_reaction(
         return {"message": f"You {reactions[data.value]} this movie."}
 
     db_reaction.value = data.value
-    db.add(db_reaction)
     await db.commit()
     return {"message": f"You {reactions[data.value]} this movie."}
 
@@ -293,3 +292,45 @@ async def reply_comment(
     await db.refresh(new_comment)
 
     return new_comment
+
+
+@router.post(
+    "/{movie_id}/add_rating/", response_model=MessageResponseSchema
+)
+async def add_rating(
+        movie_id: int,
+        data: RatingRequestSchema,
+        user: UserModel = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db),
+):
+    await check_exists_movie(db=db, movie_id=movie_id)
+
+    if data.value == 0:
+        await db.execute(delete(MovieRatingModel).where(
+         MovieRatingModel.movie_id == movie_id,
+            MovieRatingModel.user_id == user.id
+            )
+        )
+        await db.commit()
+        return {"message": "You have successfully returned the movie rating."}
+
+    db_rating = await db.scalar(select(MovieRatingModel).where(
+        MovieRatingModel.movie_id == movie_id,
+        MovieRatingModel.user_id == user.id
+        )
+    )
+
+    if not db_rating:
+        new_rating = MovieRatingModel(
+            movie_id=movie_id,
+            user_id=user.id,
+            value=data.value
+        )
+        db.add(new_rating)
+        await db.commit()
+
+        return {"message": f"You gave this movie a {data.value} rating."}
+
+    db_rating.value = data.value
+    await db.commit()
+    return {"message": f"You gave this movie a {data.value} rating."}

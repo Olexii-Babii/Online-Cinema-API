@@ -236,3 +236,7 @@ class MovieFilterSchema(BaseModel):
             if v < values["imdb_min"]:
                 raise ValueError("imdb_max must be greater than or equal to imdb_min")
         return v
+
+
+class RatingRequestSchema(BaseModel):
+    value: int = Field(ge=0, le=10)
