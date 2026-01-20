@@ -121,3 +121,15 @@ async def check_exists_genre(genre_id: int, db: AsyncSession = Depends(get_db)):
         )
 
     return genre
+
+
+async def check_exists_star(star_id: int, db: AsyncSession = Depends(get_db)):
+    star = await db.scalar(select(StarModel).where(StarModel.id == star_id))
+
+    if not star:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Star with the given ID was not found.",
+        )
+
+    return star
