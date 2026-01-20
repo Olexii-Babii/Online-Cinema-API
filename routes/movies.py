@@ -36,6 +36,7 @@ from schemas.movies import (
     CommentReplyRequestSchema,
     MovieFilterSchema, RatingRequestSchema
 )
+from security.permissions import check_moder_or_admin
 
 router = APIRouter()
 
@@ -89,7 +90,11 @@ async def get_movies(
 @router.post(
     "/", response_model=MovieDetailSchema, status_code=status.HTTP_201_CREATED
 )
-async def create_movie(movie: MovieCreateSchema, db: AsyncSession = Depends(get_db)):
+async def create_movie(
+        movie: MovieCreateSchema,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserModel = Depends(check_moder_or_admin)
+):
     db_movie = await db.scalar(select(MovieModel).where(
         MovieModel.name == movie.name,
             MovieModel.time == movie.time,
@@ -171,14 +176,21 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     return movie
 
 @router.delete("/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_movie(
+        movie_id: int,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserModel = Depends(check_moder_or_admin)
+):
     await check_exists_movie(db=db, movie_id=movie_id)
     await db.execute(delete(MovieModel).where(MovieModel.id == movie_id))
     await db.commit()
 
 @router.patch("/{movie_id}/")
 async def update_movie(
-    movie_id: int, movie: MovieUpdateSchema, db: AsyncSession = Depends(get_db)
+        movie_id: int,
+        movie: MovieUpdateSchema,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserModel = Depends(check_moder_or_admin)
 ):
 
     db_movie = await check_exists_movie(db=db, movie_id=movie_id)
