@@ -240,3 +240,7 @@ class MovieFilterSchema(BaseModel):
 
 class RatingRequestSchema(BaseModel):
     value: int = Field(ge=0, le=10)
+
+
+class StarsRequestSchema(BaseModel):
+    name: str
