@@ -3,7 +3,6 @@ from typing import List
 from fastapi import APIRouter, Depends
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from config.dependencies import get_current_user
 from database import UserModel, GenreModel, MovieModel

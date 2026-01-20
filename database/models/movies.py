@@ -1,7 +1,7 @@
 import uuid as uuid_m
 from datetime import datetime
 from enum import Enum
-from sqlalchemy import Enum as SQLAlchemyEnum, Uuid, DateTime, func
+from sqlalchemy import Enum as SQLAlchemyEnum, Uuid, DateTime, func, CheckConstraint
 
 from sqlalchemy import (
     String,
@@ -174,6 +174,10 @@ class MovieModel(Base):
         "MovieCommentModel", back_populates="movie"
     )
 
+    ratings: Mapped[list["MovieRatingModel"]] = relationship(
+        "MovieRatingModel", back_populates="movie"
+    )
+
     __table_args__ = (UniqueConstraint("name", "year", "time", name="unique_movie_constraint"),)
 
     @classmethod
@@ -227,4 +231,29 @@ class MovieCommentModel(Base):
     )
     user: Mapped["UserModel"] = relationship(
         "UserModel", back_populates="comments"
+    )
+
+
+class MovieRatingModel(Base):
+    __tablename__ = "movie_ratings"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    value: Mapped[int] = mapped_column(Integer, nullable=False)
+    movie_id: Mapped[int] = mapped_column(
+        ForeignKey("movies.id", ondelete="CASCADE")
+    )
+    movie: Mapped["MovieModel"] = relationship(
+        "MovieModel", back_populates="ratings"
+    )
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE")
+    )
+    user: Mapped["UserModel"] = relationship(
+        "UserModel", back_populates="ratings"
+    )
+
+    __table_args__ = (
+        UniqueConstraint("movie_id", "user_id", name="unique_user_movie_rating"),
+        CheckConstraint("value >= 1 AND value <= 10", name="valid_movie_rating"),
     )
