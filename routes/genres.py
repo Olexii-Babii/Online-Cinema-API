@@ -2,6 +2,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select, func, delete
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auxiliary_functions.movies import check_exists_genre
@@ -40,13 +41,21 @@ async def create_genre(
     if db_genre:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Genre already exists.")
 
-    new_genre = GenreModel(name=data.name)
-    db.add(new_genre)
-    await db.commit()
-    await db.refresh(new_genre)
+    try:
 
-    return new_genre
+        new_genre = GenreModel(name=data.name)
+        db.add(new_genre)
+        await db.commit()
+        await db.refresh(new_genre)
 
+        return new_genre
+
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while creating the genre."
+        )
 
 @router.patch("/{genre_id}", response_model=GenresResponseSchema)
 async def update_genre(
@@ -68,12 +77,20 @@ async def update_genre(
             detail=f"Genre with this name ({data.name}) already exists."
         )
 
-    db_genre.name = data.name
+    try:
+        db_genre.name = data.name
 
-    await db.commit()
-    await db.refresh(db_genre)
+        await db.commit()
+        await db.refresh(db_genre)
 
-    return db_genre
+        return db_genre
+
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while updating the genre."
+        )
 
 
 @router.delete("/{genre_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -95,6 +112,13 @@ async def delete_genre(
             detail="There are already films with this genre."
         )
 
-    await db.execute(delete(GenreModel).where(GenreModel.id == genre_id))
-    await db.commit()
+    try:
+        await db.execute(delete(GenreModel).where(GenreModel.id == genre_id))
+        await db.commit()
 
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while deleting the genre."
+        )
