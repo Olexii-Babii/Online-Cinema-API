@@ -1,6 +1,4 @@
 from fastapi import Depends, HTTPException, status
-from sqlalchemy import select, or_
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.dependencies import get_current_user
 from database import UserModel, UserGroupEnum

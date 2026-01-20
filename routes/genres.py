@@ -11,6 +11,7 @@ from database.engine import get_db
 from database.models.movies import MoviesGenresModel
 from schemas.genres import GenresCountResponseSchema, GenresRequestSchema
 from schemas.movies import GenresResponseSchema
+from security.permissions import check_moder_or_admin
 
 router = APIRouter()
 
@@ -32,6 +33,7 @@ async def get_genres(
 async def create_genre(
         data: GenresRequestSchema,
         db: AsyncSession = Depends(get_db),
+        current_user: UserModel = Depends(check_moder_or_admin)
 ):
     db_genre = await db.scalar(select(GenreModel).where(GenreModel.name == data.name))
 
@@ -51,6 +53,7 @@ async def update_genre(
         genre_id: int,
         data: GenresRequestSchema,
         db: AsyncSession = Depends(get_db),
+        current_user: UserModel = Depends(check_moder_or_admin)
 ):
     db_genre = await check_exists_genre(genre_id=genre_id, db=db)
 
@@ -77,6 +80,7 @@ async def update_genre(
 async def delete_genre(
         genre_id: int,
         db: AsyncSession = Depends(get_db),
+        current_user: UserModel = Depends(check_moder_or_admin)
 ):
     await check_exists_genre(genre_id=genre_id, db=db)
 
