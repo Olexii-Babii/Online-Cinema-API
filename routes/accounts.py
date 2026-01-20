@@ -313,6 +313,7 @@ async def user_login(
         payload_refresh_token = jwt_manager.decode_refresh_token(refresh_token)
         days_valid = payload_refresh_token["exp"] // (60 * 24)
         expires_at = datetime.now(timezone.utc) + timedelta(days=days_valid)
+        await db.execute(delete(RefreshTokenModel).where(RefreshTokenModel.user_id == db_user.id))
         db_refresh_token = RefreshTokenModel(
             user_id=db_user.id,
             token=refresh_token,
