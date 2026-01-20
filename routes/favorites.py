@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select, func
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -105,27 +106,34 @@ async def add_favorite_movie(
                                .where(FavoriteModel.user_id == current_user.id)
                                )
 
-    if not favorite:
-        favorite = FavoriteModel(
-            user_id=current_user.id,
-            movies=[movie]
-        )
-        db.add(favorite)
-
-    else:
-        if movie in favorite.movies:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Movie already in favorites."
+    try:
+        if not favorite:
+            favorite = FavoriteModel(
+                user_id=current_user.id,
+                movies=[movie]
             )
-        favorite.movies.append(movie)
+            db.add(favorite)
 
-    await db.commit()
+        else:
+            if movie in favorite.movies:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Movie already in favorites."
+                )
+            favorite.movies.append(movie)
 
-    return {
-        "movie_id": movie_id,
-        "message": "You successfully added your favorite movie.",
-    }
+        await db.commit()
+
+        return {
+            "movie_id": movie_id,
+            "message": "You successfully added your favorite movie.",
+        }
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while adding the movie to favorites."
+        )
 
 
 @router.delete("/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
@@ -153,6 +161,14 @@ async def remove_favorite_movie(
             detail="Movie is not in favorites."
         )
 
-    favorite.movies.remove(movie)
-    await db.commit()
-    return {}
+    try:
+        favorite.movies.remove(movie)
+        await db.commit()
+        return {}
+
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while removing the movie from favorites."
+        )
