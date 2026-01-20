@@ -2,6 +2,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select, func, delete
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auxiliary_functions.movies import check_exists_star
@@ -43,13 +44,20 @@ async def create_star(
     if db_star:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Star already exists.")
 
-    new_star = StarModel(name=data.name)
-    db.add(new_star)
-    await db.commit()
-    await db.refresh(new_star)
+    try:
+        new_star = StarModel(name=data.name)
+        db.add(new_star)
+        await db.commit()
+        await db.refresh(new_star)
 
-    return new_star
+        return new_star
 
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while creating the star."
+        )
 
 @router.patch("/{star_id}", response_model=StarsResponseSchema)
 async def update_star(
@@ -70,13 +78,22 @@ async def update_star(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Star with this name ({data.name}) already exists."
         )
+    try:
 
-    db_star.name = data.name
+        db_star.name = data.name
 
-    await db.commit()
-    await db.refresh(db_star)
+        await db.commit()
+        await db.refresh(db_star)
 
-    return db_star
+        return db_star
+
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while updating the star."
+        )
+
 
 
 @router.delete("/{star_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -85,6 +102,7 @@ async def delete_star(
         db: AsyncSession = Depends(get_db),
         current_user: UserModel = Depends(check_moder_or_admin)
 ):
+
     await check_exists_star(star_id=star_id, db=db)
 
     movies_count = await db.scalar(
@@ -98,6 +116,13 @@ async def delete_star(
             detail="There are already films with this star."
         )
 
-    await db.execute(delete(StarModel).where(StarModel.id == star_id))
-    await db.commit()
+    try:
+        await db.execute(delete(StarModel).where(StarModel.id == star_id))
+        await db.commit()
 
+    except SQLAlchemyError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while deleting the star."
+        )
