@@ -10,6 +10,7 @@ from database import UserModel
 from database.engine import get_db
 from database.models.movies import StarModel, StarsMoviesModel
 from schemas.movies import StarsResponseSchema, StarsRequestSchema
+from security.permissions import check_moder_or_admin
 
 router = APIRouter()
 
@@ -35,6 +36,7 @@ async def get_stars(
 async def create_star(
         data: StarsRequestSchema,
         db: AsyncSession = Depends(get_db),
+        current_user: UserModel = Depends(check_moder_or_admin)
 ):
     db_star = await db.scalar(select(StarModel).where(StarModel.name == data.name))
 
@@ -54,6 +56,7 @@ async def update_star(
         star_id: int,
         data: StarsRequestSchema,
         db: AsyncSession = Depends(get_db),
+        current_user: UserModel = Depends(check_moder_or_admin)
 ):
     db_star = await check_exists_star(star_id=star_id, db=db)
 
@@ -80,6 +83,7 @@ async def update_star(
 async def delete_star(
         star_id: int,
         db: AsyncSession = Depends(get_db),
+        current_user: UserModel = Depends(check_moder_or_admin)
 ):
     await check_exists_star(star_id=star_id, db=db)
 
