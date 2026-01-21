@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status
 
-from config.dependencies import get_current_user
-from database import UserModel, UserGroupEnum
+from auxiliary_functions.movies import get_current_user
+from database import UserModel
 
 
 async def check_moder_or_admin(

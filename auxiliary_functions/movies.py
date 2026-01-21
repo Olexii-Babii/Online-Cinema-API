@@ -1,11 +1,16 @@
+from typing import Annotated, Optional
 from urllib.parse import urlencode
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Header
+from jose import JWTError, ExpiredSignatureError
 from sqlalchemy import Select, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from database import MovieModel, StarModel, DirectorModel, GenreModel
+from config.dependencies import get_jwt_auth_manager
+from database import MovieModel, StarModel, DirectorModel, GenreModel, UserModel
 from database.engine import get_db
+from managing.jwt_manager import JWTAuthManager
 from schemas.movies import MovieFilterSchema
 
 
@@ -133,3 +138,38 @@ async def check_exists_star(star_id: int, db: AsyncSession = Depends(get_db)):
         )
 
     return star
+
+
+async def get_current_user(
+    authorization: Annotated[Optional[str], Header()] = None,
+    jwt_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
+    db: AsyncSession = Depends(get_db),
+):
+    if not authorization:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authorization header is missing",
+        )
+
+    try:
+        payload = jwt_manager.decode_access_token(authorization.split(" ")[1])
+
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired."
+        )
+
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Authorization header format. Expected 'Bearer <token>'",
+        )
+
+
+    token_user_id = payload.get("user_id")
+
+    db_user = await db.scalar(select(UserModel)
+                              .options(selectinload(UserModel.group))
+                              .where(UserModel.id == token_user_id))
+
+    return db_user

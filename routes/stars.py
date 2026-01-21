@@ -5,8 +5,7 @@ from sqlalchemy import select, func, delete
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from auxiliary_functions.movies import check_exists_star
-from config.dependencies import get_current_user
+from auxiliary_functions.movies import check_exists_star, get_current_user
 from database import UserModel
 from database.engine import get_db
 from database.models.movies import StarModel, StarsMoviesModel
