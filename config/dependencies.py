@@ -1,3 +1,4 @@
+import os
 from typing import Annotated, Optional
 
 from fastapi import Depends, Header, HTTPException, status
@@ -6,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from config.settings import Settings
+from config.settings import Settings, TestingSettings
 from database import UserModel
 from database.engine import get_db
 from managing.jwt_manager import JWTAuthManager
@@ -14,6 +15,9 @@ from managing.s3_manager import S3Client
 
 
 def get_settings():
+    environment = os.getenv("ENVIRONMENT", "developing")
+    if environment == "testing":
+        return TestingSettings()
     return Settings()
 
 
