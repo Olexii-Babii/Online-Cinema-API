@@ -21,7 +21,7 @@ class ProfileRequestSchema(ProfileBaseSchema):
         cls,
         first_name: str = Form(...),
         last_name: str = Form(...),
-        info: str = Form(...),
+        info: str = Form(""),
         gender: str = Form(...),
         date_of_birth: datetime.date = Form(...),
         avatar: UploadFile = File(...),
