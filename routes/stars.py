@@ -22,6 +22,7 @@ async def get_stars(
         current_user: UserModel = Depends(get_current_user)
 ):
     stars = await db.scalars(select(StarModel))
+    stars = stars.all()
 
     if not stars:
         raise HTTPException(
@@ -29,7 +30,7 @@ async def get_stars(
             detail="No stars found."
         )
 
-    return stars.all()
+    return stars
 
 
 @router.post("/", response_model=StarsResponseSchema, status_code=status.HTTP_201_CREATED)
