@@ -97,7 +97,7 @@ async def test_register_user_internal_server_error(client, seed_user_groups):
     with patch("routes.accounts.AsyncSession.commit", side_effect=SQLAlchemyError):
         response = await client.post("/accounts/register/", json=payload)
 
-        assert response.status_code == 500, "Expected status code 500 for internal server error."
+        assert response.status_code == 500, "Expected status code does not match. Should be 500."
 
         response_data = response.json()
         expected_message = "An error occurred during user creation."
