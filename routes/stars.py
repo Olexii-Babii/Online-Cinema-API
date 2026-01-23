@@ -59,7 +59,7 @@ async def create_star(
             detail="An error occurred while creating the star."
         )
 
-@router.patch("/{star_id}", response_model=StarsResponseSchema)
+@router.patch("/{star_id}/", response_model=StarsResponseSchema)
 async def update_star(
         star_id: int,
         data: StarsRequestSchema,
@@ -96,7 +96,7 @@ async def update_star(
 
 
 
-@router.delete("/{star_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{star_id}/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_star(
         star_id: int,
         db: AsyncSession = Depends(get_db),
