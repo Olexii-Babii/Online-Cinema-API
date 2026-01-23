@@ -38,7 +38,7 @@ async def create_genre(
     db_genre = await db.scalar(select(GenreModel).where(GenreModel.name == data.name))
 
     if db_genre:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Genre already exists.")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Genre already exists.")
 
     try:
 

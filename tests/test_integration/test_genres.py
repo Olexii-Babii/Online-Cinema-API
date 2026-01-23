@@ -90,7 +90,7 @@ async def test_moder_create_genre_twice(
 
     new_response = await client.post("/genres/", headers={"Authorization": f"Bearer {access_token}"}, json=payload)
 
-    assert new_response.status_code == 400, "Expected status code does not match. Should be 400"
+    assert new_response.status_code == 409, "Expected status code does not match. Should be 409"
     new_response_data = new_response.json()
     assert new_response_data == {"detail": "Genre already exists."}, "Response data does not match"
 
