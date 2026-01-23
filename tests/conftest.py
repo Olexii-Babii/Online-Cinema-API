@@ -1,13 +1,14 @@
+import datetime
 import json
 
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
-from sqlalchemy import insert
+from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.dependencies import get_settings, get_s3_client
 from database import UserGroupEnum, UserGroupModel, CertificationModel, GenreModel, StarModel, DirectorModel, UserModel, \
-    UserProfileModel, MovieModel, FavoriteModel, MovieReactionModel
+    UserProfileModel, MovieModel, FavoriteModel, MovieReactionModel, ActivationTokenModel
 from database.engine import reset_database, get_db_contextmanager
 from database.models.favorites import MoviesFavoritesModel
 from database.models.movies import MovieRatingModel, MovieCommentModel, MoviesGenresModel, StarsMoviesModel, \
@@ -115,7 +116,7 @@ async def seed_user_groups(db_session: AsyncSession):
 @pytest_asyncio.fixture(scope="function")
 async def seed_database(db_session):
 
-    with open("seed_test_data.json", "r", encoding="utf-8") as file:
+    with open("tests/seed_test_data.json", "r", encoding="utf-8") as file:
         data = json.load(file)
 
     user_groups = [UserGroupModel(**ug) for ug in data["user_groups"]]
@@ -133,7 +134,23 @@ async def seed_database(db_session):
     db_session.add_all(users + movies)
     await db_session.flush()
 
-    users_profiles = [UserProfileModel(**up) for up in data["user_profiles"]]
+    users_profiles = []
+    for user_profile in data["user_profiles"]:
+        users_profiles.append(
+            UserProfileModel(
+                id=user_profile["id"],
+                first_name=user_profile["first_name"],
+                last_name=user_profile["last_name"],
+                avatar=user_profile["avatar"],
+                gender=user_profile["gender"],
+                date_of_birth=datetime.datetime.strptime(
+                    user_profile["date_of_birth"],
+                    "%Y-%m-%d"
+                ).date() if user_profile["date_of_birth"] else None,
+                info=user_profile["info"],
+                user_id=user_profile["user_id"]
+            )
+        )
     favorites = [FavoriteModel(**f) for f in data["favorites"]]
     reactions = [MovieReactionModel(**r) for r in data["movie_reactions"]]
     ratings = [MovieRatingModel(**r) for r in data["movie_ratings"]]
@@ -150,3 +167,25 @@ async def seed_database(db_session):
     await db_session.commit()
 
     yield db_session
+
+
+@pytest_asyncio.fixture(scope="function")
+async def create_test_user(db_session: AsyncSession, seed_database):
+    payload = {
+        "email": "testuser@example.com",
+        "password": "Password12345@"
+    }
+
+    user_group = await db_session.scalar(select(UserGroupModel).where(UserGroupModel.name == UserGroupEnum.USER))
+
+    user = UserModel(
+        email=payload["email"],
+        password=payload["password"],
+        group_id=user_group.id
+    )
+    user.is_active = True
+
+    db_session.add(user)
+    await db_session.commit()
+
+    yield user
