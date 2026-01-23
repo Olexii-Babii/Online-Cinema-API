@@ -17,28 +17,28 @@
     {
       "id": 1,
       "email": "john.doe@example.com",
-      "hashed_password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYIq.8S9i5.",
+      "password": "Password12340@",
       "is_active": true,
       "group_id": 1
     },
     {
       "id": 2,
       "email": "jane.smith@example.com",
-      "hashed_password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYIq.8S9i5.",
+      "password": "Password12346@",
       "is_active": true,
       "group_id": 1
     },
     {
       "id": 3,
       "email": "admin@example.com",
-      "hashed_password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYIq.8S9i5.",
+      "password": "Password12347@",
       "is_active": true,
       "group_id": 3
     },
     {
       "id": 4,
       "email": "moderator@example.com",
-      "hashed_password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYIq.8S9i5.",
+      "password": "Password12348@",
       "is_active": true,
       "group_id": 2
     }
@@ -196,7 +196,6 @@
   "movies": [
     {
       "id": 1,
-      "uuid": "550e8400-e29b-41d4-a716-446655440001",
       "name": "Inception",
       "year": 2010,
       "time": 148,
@@ -210,7 +209,6 @@
     },
     {
       "id": 2,
-      "uuid": "550e8400-e29b-41d4-a716-446655440002",
       "name": "The Shawshank Redemption",
       "year": 1994,
       "time": 142,
@@ -224,7 +222,6 @@
     },
     {
       "id": 3,
-      "uuid": "550e8400-e29b-41d4-a716-446655440003",
       "name": "The Dark Knight",
       "year": 2008,
       "time": 152,
@@ -238,7 +235,6 @@
     },
     {
       "id": 4,
-      "uuid": "550e8400-e29b-41d4-a716-446655440004",
       "name": "Forrest Gump",
       "year": 1994,
       "time": 142,
@@ -252,7 +248,6 @@
     },
     {
       "id": 5,
-      "uuid": "550e8400-e29b-41d4-a716-446655440005",
       "name": "Oppenheimer",
       "year": 2023,
       "time": 180,
