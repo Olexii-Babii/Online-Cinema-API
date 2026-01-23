@@ -189,3 +189,25 @@ async def create_test_user(db_session: AsyncSession, seed_database):
     await db_session.commit()
 
     yield user
+
+
+@pytest_asyncio.fixture(scope="function")
+async def create_test_moder(db_session: AsyncSession, seed_database):
+    payload = {
+        "email": "testmoder@example.com",
+        "password": "Password12345@"
+    }
+
+    moder_group = await db_session.scalar(select(UserGroupModel).where(UserGroupModel.name == UserGroupEnum.MODERATOR))
+
+    moder = UserModel(
+        email=payload["email"],
+        password=payload["password"],
+        group_id=moder_group.id
+    )
+    moder.is_active = True
+
+    db_session.add(moder)
+    await db_session.commit()
+
+    yield moder
