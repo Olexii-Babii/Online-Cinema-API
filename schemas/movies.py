@@ -2,7 +2,7 @@ import datetime
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from decimal import Decimal
 
 
@@ -32,6 +32,8 @@ class MovieListItemSchema(BaseModel):
     year: int
     time: int
     imdb: float
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovieListResponseSchema(BaseModel):
@@ -186,6 +188,7 @@ class SortOrder(str, Enum):
 
 
 class MovieSortField(str, Enum):
+    ID = "id"
     NAME = "name"
     PRICE = "price"
     YEAR = "year"
@@ -215,7 +218,7 @@ class MovieFilterSchema(BaseModel):
     price_max: Optional[float] = Field(None, ge=0, description="Maximum price")
 
     sort_by: Optional[MovieSortField] = Field(
-        MovieSortField.NAME,
+        MovieSortField.ID,
         description="Field to sort by"
     )
     order: SortOrder = Field(
