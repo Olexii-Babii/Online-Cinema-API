@@ -50,16 +50,24 @@ async def filtering_movie(query: Select, filters: MovieFilterSchema):
         query = query.where(MovieModel.imdb <= filters.imdb_max)
 
 
-    if filters.director:
+    if filters.directors:
+        # query = query.join(MovieModel.directors).where(
+        #     DirectorModel.name.ilike(f"%{filters.director}%")
+        # )
+        directors = [int(director.strip()) for director in filters.directors.split(",")]
         query = query.join(MovieModel.directors).where(
-            DirectorModel.name.ilike(f"%{filters.director}%")
+            DirectorModel.id.in_(directors)
         )
         need_distinct = True
 
 
-    if filters.star:
-        query = query.join(MovieModel.stars).where(
-            StarModel.name.ilike(f"%{filters.star}%")
+    if filters.stars:
+        # query = query.join(MovieModel.stars).where(
+        #     StarModel.name.ilike(f"%{filters.star}%")
+        # )
+        stars = [int(star.strip()) for star in filters.stars.split(",")]
+        query = query.join(MovieModel.directors).where(
+            StarModel.id.in_(stars)
         )
         need_distinct = True
 
