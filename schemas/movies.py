@@ -228,15 +228,15 @@ class MovieFilterSchema(BaseModel):
 
     @field_validator("year_to")
     def validate_year_range(cls, v, values):
-        if v and "year_from" in values and values["year_from"]:
-            if v < values["year_from"]:
+        if v and "year_from" in values.data and values.data["year_from"]:
+            if v < values.data["year_from"]:
                 raise ValueError("year_to must be greater than or equal to year_from")
         return v
 
     @field_validator("imdb_max")
     def validate_imdb_range(cls, v, values):
-        if v and "imdb_min" in values and values["imdb_min"]:
-            if v < values["imdb_min"]:
+        if v and "imdb_min" in values.data and values.data["imdb_min"]:
+            if v < values.data["imdb_min"]:
                 raise ValueError("imdb_max must be greater than or equal to imdb_min")
         return v
 
