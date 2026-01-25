@@ -164,7 +164,6 @@ async def remove_favorite_movie(
     try:
         favorite.movies.remove(movie)
         await db.commit()
-        return {}
 
     except SQLAlchemyError:
         await db.rollback()
