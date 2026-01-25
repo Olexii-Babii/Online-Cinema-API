@@ -210,9 +210,9 @@ class MovieFilterSchema(BaseModel):
     imdb_max: Optional[float] = Field(None, ge=0, le=10, description="Maximum IMDB rating")
 
 
-    director: Optional[str] = Field(None, description="Filter by director name")
+    directors: Optional[str] = Field(None, description="Filter by directors (comma-separated)")
 
-    star: Optional[str] = Field(None, description="Filter by star name")
+    stars: Optional[str] = Field(None, description="Filter by stars (comma-separated)")
 
     price_min: Optional[float] = Field(None, ge=0, description="Minimum price")
     price_max: Optional[float] = Field(None, ge=0, description="Maximum price")
