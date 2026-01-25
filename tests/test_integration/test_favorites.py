@@ -742,6 +742,75 @@ async def test_get_favorite_movies_order(
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+async def test_get_favorite_movies_with_different_params(
+        client, db_session, reset_db, jwt_manager, create_test_user
+):
+    filters = {
+        "page": 1,
+        "per_page": 10,
+        "genres": "1,4,5",
+        "year_from": 2009,
+        "imdb_min": 8.5
+    }
+    db_user = await db_session.scalar(select(UserModel).where(UserModel.id == 1))
+    access_token = jwt_manager.create_access_token(
+        data={
+            "email": db_user.email,
+            "user_id": db_user.id
+        }
+    )
+
+    response = await client.get("/favorites/", headers={"Authorization": f"Bearer {access_token}"}, params=filters)
+
+    assert response.status_code == 200, "Expected status code does not match. Should be 200"
+
+    query = (select(MovieModel)
+                        .join(MoviesFavoritesModel, MovieModel.id == MoviesFavoritesModel.c.movie_id)
+                        .join(FavoriteModel, FavoriteModel.id == MoviesFavoritesModel.c.favorite_id)
+                        .where(FavoriteModel.user_id == db_user.id)
+                        .distinct()
+                        .order_by(MovieModel.id.desc())
+                    )
+    genres = [int(genre.strip()) for genre in filters["genres"].split(",")]
+    query = query.join(MovieModel.genres).where(
+        GenreModel.id.in_(genres))
+
+    query = query.where(MovieModel.year >= filters["year_from"])
+    query = query.where(MovieModel.imdb >= filters["imdb_min"])
+    movies = await db_session.scalars(query)
+    movies = movies.all()
+
+    movies = [MovieListItemSchema.model_validate(m).model_dump() for m in movies]
+    count = len(movies)
+    total_pages = math.ceil(count / filters["per_page"])
+
+    result = {
+        "movies": movies,
+        "prev_page": (
+            None
+            if filters["page"] == 1
+            else build_url(
+                filters=MovieFilterSchema(search=filters["search"]),
+                per_page=filters["per_page"],
+                page=filters["page"] - 1)
+        ),
+        "next_page": (
+            None
+            if filters["page"] >= total_pages
+            else build_url(
+                filters=MovieFilterSchema(search=filters["search"]),
+                per_page=filters["per_page"],
+                page=filters["page"] + 1)
+        ),
+        "total_pages": total_pages,
+        "total_items": count,
+    }
+    response_data = response.json()
+    assert response_data == result, "Response data does not match"
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
 @pytest.mark.parametrize("page, per_page", [
     (1, 1),
     (2, 1),
