@@ -85,6 +85,7 @@ async def filtering_movie(query: Select, filters: MovieFilterSchema):
 
 async def sorting_movie(query: Select, filters: MovieFilterSchema):
     sort_mapping = {
+        "id": MovieModel.id,
         "name": MovieModel.name,
         "year": MovieModel.year,
         "imdb": MovieModel.imdb,
