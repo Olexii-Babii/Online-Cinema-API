@@ -374,6 +374,10 @@
       "favorite_id": 1
     },
     {
+      "movie_id": 5,
+      "favorite_id": 1
+    },
+    {
       "movie_id": 2,
       "favorite_id": 2
     },
