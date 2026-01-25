@@ -29,9 +29,9 @@ async def filtering_movie(query: Select, filters: MovieFilterSchema):
         )
 
     if filters.genres:
-        genres = [genre.strip() for genre in filters.genres.split(",")]
+        genres = [int(genre.strip()) for genre in filters.genres.split(",")]
         query = query.join(MovieModel.genres).where(
-            GenreModel.name.in_(genres)
+            GenreModel.id.in_(genres)
     )
         need_distinct = True
 
