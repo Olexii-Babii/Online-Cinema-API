@@ -374,7 +374,7 @@ async def add_rating(
                 )
             )
             await db.commit()
-            return {"message": "You have successfully returned the movie rating."}
+            return {"message": "You have successfully removed the movie rating."}
 
         db_rating = await db.scalar(select(MovieRatingModel).where(
             MovieRatingModel.movie_id == movie_id,
