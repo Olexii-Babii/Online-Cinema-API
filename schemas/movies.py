@@ -75,10 +75,10 @@ class MovieDetailSchema(BaseModel):
     time: int
     imdb: float
     votes: int
-    meta_score: float
-    gross: float
+    meta_score: Optional[float] = None
+    gross: Optional[float] = None
     description: str
-    price: Decimal
+    price: Optional[Decimal] = None
     certification: CertificationResponseSchema
     genres: List[GenresResponseSchema]
     stars: List[StarsResponseSchema]
