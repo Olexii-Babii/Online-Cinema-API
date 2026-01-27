@@ -10,20 +10,28 @@ class CertificationResponseSchema(BaseModel):
     id: int
     name: str
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class GenresResponseSchema(BaseModel):
     id: int
     name: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class StarsResponseSchema(BaseModel):
     id: int
     name: str
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class DirectorsResponseSchema(BaseModel):
     id: int
     name: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovieListItemSchema(BaseModel):
@@ -75,6 +83,8 @@ class MovieDetailSchema(BaseModel):
     genres: List[GenresResponseSchema]
     stars: List[StarsResponseSchema]
     directors: List[DirectorsResponseSchema]
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovieUpdateSchema(BaseModel):
