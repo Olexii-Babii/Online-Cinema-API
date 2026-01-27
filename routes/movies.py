@@ -203,7 +203,7 @@ async def delete_movie(
         )
 
 
-@router.patch("/{movie_id}/")
+@router.patch("/{movie_id}/", response_model=MovieDetailSchema)
 async def update_movie(
         movie_id: int,
         movie: MovieUpdateSchema,
@@ -226,7 +226,7 @@ async def update_movie(
             db_movie, attribute_names=["genres", "stars", "directors", "certification"]
         )
 
-        return {"detail": "Movie updated successfully."}
+        return db_movie
 
     except SQLAlchemyError:
         await db.rollback()
