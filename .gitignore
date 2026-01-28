@@ -8,6 +8,7 @@ __pycache__/
 
 TASK.md
 requirements.txt
+.coveragerc
 
 # Distribution / packaging
 .Python
