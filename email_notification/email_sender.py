@@ -38,7 +38,9 @@ class EmailSender():
 
     async def send_activation_complete_email(self, email_to: EmailStr):
         subject = "Account Activated Successfully"
-        body = ("You have successfully activated your account.")
+        body = ("You have successfully activated your account.\n"
+                "Below you can login your account.\n"
+                f"{settings.BASE_URL}/accounts/login/")
         await self._send_email(email_to=email_to, subject=subject, body=body)
 
     async def send_password_reset_email(self, email_to: EmailStr, token: str):
@@ -49,5 +51,7 @@ class EmailSender():
 
     async def send_password_reset_complete_email(self, email_to: EmailStr):
         subject = "Password Changed Successfully"
-        body = ("You have successfully changed your password.")
+        body = ("You have successfully changed your password.\n"
+                "Below you can login your account.\n"
+                f"{settings.BASE_URL}/accounts/login/")
         await self._send_email(email_to=email_to, subject=subject, body=body)
