@@ -19,6 +19,7 @@ class BaseAppSettings(BaseSettings):
     MAIL_PASSWORD: str = os.getenv("MAIL_PASSWORD", "test_password")
     MAIL_FROM: str = os.getenv("MAIL_FROM", "noreply@theater.com")
     MAIL_PORT: int = os.getenv("MAIL_PORT", 1025)
+    MAIL_API_PORT: int = os.getenv("MAIL_API_PORT", 8025)
     MAIL_SERVER: str = os.getenv("MAIL_SERVER", "mailhog_theater")
     MAIL_STARTTLS: bool = os.getenv("MAIL_STARTTLS", False)
     MAIL_SSL_TLS: bool = os.getenv("MAIL_SSL_TLS", False)
