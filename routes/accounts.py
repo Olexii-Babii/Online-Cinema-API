@@ -53,7 +53,7 @@ async def register_user(user: schemas.UserRegistrationRequestSchema,
         )
         db.add(activation_token)
         await db.flush()
-        # background_tasks.add_task(email_sender.send_activation_email, activation_token.token, user.email)
+        background_tasks.add_task(email_sender.send_activation_email, activation_token.token, user.email)
 
         await db.commit()
         await db.refresh(new_user)
@@ -102,7 +102,7 @@ async def activate_user(
         db_user.is_active = True
 
         await db.execute(delete(ActivationTokenModel).where(ActivationTokenModel.user_id == db_user.id))
-        # background_tasks.add_task(email_sender.send_activation_complete_email, db_user.email)
+        background_tasks.add_task(email_sender.send_activation_complete_email, db_user.email)
         await db.commit()
 
         return {"message": "User account activated successfully."}
@@ -145,7 +145,7 @@ async def resend_activation_email(
         )
         db.add(activation_token)
         await db.flush()
-        # background_tasks.add_task(email_sender.send_activation_email, activation_token.token, db_user.email)
+        background_tasks.add_task(email_sender.send_activation_email, activation_token.token, db_user.email)
 
         await db.commit()
 
@@ -182,7 +182,7 @@ async def password_reset_request(
         token = PasswordResetTokenModel(user_id=db_user.id)
         db.add(token)
         await db.flush()
-        # background_tasks.add_task(email_sender.send_password_reset_email, email_to=db_user.email, token=token.token)
+        background_tasks.add_task(email_sender.send_password_reset_email, email_to=db_user.email, token=token.token)
         await db.commit()
 
         return {
@@ -238,6 +238,7 @@ async def reset_password_complete(
             )
         )
         await db.commit()
+        background_tasks.add_task(email_sender.send_password_reset_complete_email, email_to=db_user.email)
         return {"message": "Password reset successfully."}
 
     except SQLAlchemyError:
