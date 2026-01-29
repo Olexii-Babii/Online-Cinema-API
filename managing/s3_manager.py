@@ -1,7 +1,7 @@
 from typing import Union
 
 import aioboto3
-from botocore.exceptions import HTTPClientError, NoCredentialsError, BotoCoreError
+from botocore.exceptions import HTTPClientError, NoCredentialsError, BotoCoreError, ClientError
 
 from config.settings import Settings
 
@@ -23,6 +23,11 @@ class S3Client():
             async with self.session.client(
                     "s3", endpoint_url=self.settings.S3_STORAGE_ENDPOINT
             ) as client:
+                try:
+                    await client.head_bucket(Bucket=self.settings.S3_BUCKET_NAME)
+                except ClientError as e:
+                    if e.response["Error"]["Code"] == "404":
+                        await client.create_bucket(Bucket=self.settings.S3_BUCKET_NAME)
                 await client.put_object(
                     Bucket=self.settings.S3_BUCKET_NAME,
                     Key=file_name,
