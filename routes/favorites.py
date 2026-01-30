@@ -29,7 +29,60 @@ from schemas.movies import (
 router = APIRouter()
 
 
-@router.get("/", response_model=MovieListResponseSchema)
+@router.get("/",
+            response_model=MovieListResponseSchema,
+            summary="Get a paginated list of favorite movies",
+            description=(
+                    "<h3>This endpoint retrieves a paginated list of favorite movies from the database. "
+                    "Clients can specify the `page` number and the number of items per page using `per_page`. "
+                    "The response includes details about the movies, total pages, and total items, "
+                    "along with links to the previous and next pages if applicable.\n"
+                    "The user also has the ability to:\n"
+                    "1. Search for movies by:\n"
+                    "- `Title`\n"
+                    "- `Description`\n"
+                    "- `Stars`\n"
+                    "- `Directors`\n"
+                    "2. Filter movies by:\n"
+                    "- `Genres`\n"
+                    "- `Year`\n"
+                    "- `Year range`\n"
+                    "- `IMDB range`\n"
+                    "- `Directors`\n"
+                    "- `Stars`\n"
+                    "- `Minimum and maximum price`\n"
+                    "3. Sort movies by:\n"
+                    "- `id`\n"
+                    "- `Title`\n"
+                    "- `Year`\n"
+                    "- `IMDB`\n"
+                    "- `Price`\n"
+                    "4. Set order (asc or desc)</h3>"
+            ),
+            responses={
+                404: {
+                    "description": "No movies found.",
+                    "content": {
+                        "application/json": {
+                            "examples": {
+                                "favorite list not found": {
+                                    "summary": "Favorite list not found",
+                                    "value": {"detail": "You don't have favorite movies."}
+                                },
+                                "empty favorite list": {
+                                    "summary": "Favorite list is empty",
+                                    "value": {"detail": "Your favorite movies list is empty."}
+                                },
+                                "no movies found": {
+                                    "summary": "No movies with given parameters",
+                                    "value": {"detail": "No movies found."}
+                                }
+                            }
+                        }
+                    },
+                }
+            }
+            )
 async def get_favorite_movies(
     filters: MovieFilterSchema = Depends(),
     page: Annotated[int, Query(ge=1)] = 1,
@@ -63,7 +116,7 @@ async def get_favorite_movies(
     count = await db.scalar(count_query)
 
     if count == 0:
-        raise HTTPException(status_code=404, detail="No movies found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No movies found.")
 
     query = await sorting_movie(query=query, filters=filters)
 
@@ -93,7 +146,35 @@ async def get_favorite_movies(
     return response
 
 
-@router.post("/{movie_id}/", response_model=FavoriteMovieResponseSchema)
+@router.post("/{movie_id}/",
+             response_model=FavoriteMovieResponseSchema,
+             summary="Add the movie to the favorite list.",
+             description=(
+                     "<h3>This endpoint allows clients to add the movie to the favorite list.</h3>"
+             ),
+             responses={
+                 409: {
+                     "description": "Movie already in favorites.",
+                     "content": {
+                         "application/json": {
+                             "example": {
+                                 "detail": "Movie already in favorites."
+                             }
+                         }
+                     },
+                 },
+                 500: {
+                     "description": "An error occurred while adding the movie to favorites.",
+                     "content": {
+                         "application/json": {
+                             "example": {
+                                 "detail": "An error occurred while adding the movie to favorites."
+                             }
+                         }
+                     },
+                 }
+             },
+             )
 async def add_favorite_movie(
         movie_id: int,
         db: AsyncSession = Depends(get_db),
@@ -136,7 +217,45 @@ async def add_favorite_movie(
         )
 
 
-@router.delete("/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{movie_id}/",
+               status_code=status.HTTP_204_NO_CONTENT,
+               summary="Remove the movie from the favorite list.",
+               description=(
+                       "<h3>This endpoint allows clients to remove the movie from the favorite list.</h3>"
+               ),
+               responses={
+                    404: {
+                       "description": "You don't have favorite movies.",
+                       "content": {
+                           "application/json": {
+                               "example": {
+                                   "detail": "You don't have favorite movies."
+                               }
+                           }
+                       },
+                   },
+                   409: {
+                       "description": "Movie is not in favorites.",
+                       "content": {
+                           "application/json": {
+                               "example": {
+                                   "detail": "Movie is not in favorites."
+                               }
+                           }
+                       },
+                   },
+                   500: {
+                       "description": "An error occurred while removing the movie from favorites.",
+                       "content": {
+                           "application/json": {
+                               "example": {
+                                   "detail": "An error occurred while removing the movie from favorites."
+                               }
+                           }
+                       },
+                   }
+               },
+               )
 async def remove_favorite_movie(
         movie_id: int,
         db: AsyncSession = Depends(get_db),
