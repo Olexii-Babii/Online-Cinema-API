@@ -23,7 +23,7 @@ email_sender = EmailSender()
 @router.post("/register/",
              response_model=schemas.UserRegistrationResponseSchema,
              summary="User Registration",
-             description="Register a new user with an email and password.",
+             description="<h3>Register a new user with an email and password.</h3>",
              status_code=status.HTTP_201_CREATED,
              responses={
                  409: {
@@ -97,7 +97,7 @@ async def register_user(user: schemas.UserRegistrationRequestSchema,
 @router.post("/activate/",
              response_model=schemas.MessageResponseSchema,
              summary="Activate User Account",
-             description="Activate a user's account using their email and activation token.",
+             description="<h3>Activate a user's account using their email and activation token.</h3>",
              status_code=status.HTTP_200_OK,
              responses={
                  400: {
@@ -186,7 +186,7 @@ async def activate_user(
              response_model=schemas.MessageResponseSchema,
              summary="Request Resend Activation Token",
              description=(
-                     "Allows users to re-obtain an activation token"
+                     "<h3>Allows users to re-obtain an activation token.</h3>"
              ),
              status_code=status.HTTP_200_OK,
              responses={
@@ -272,8 +272,8 @@ async def resend_activation_email(
              response_model=schemas.MessageResponseSchema,
              summary="Request Password Reset Token",
              description=(
-                     "Allows a user to request a password reset token. If the user exists and is active, "
-                     "a new token will be generated and any existing tokens will be invalidated."
+                     "<h3>Allows a user to request a password reset token. If the user exists and is active, "
+                     "a new token will be generated and any existing tokens will be invalidated.</h3>"
              ),
              status_code=status.HTTP_200_OK,
              )
@@ -315,7 +315,7 @@ async def password_reset_request(
 @router.post("/reset-password/complete/",
              response_model=schemas.MessageResponseSchema,
              summary="Reset User Password",
-             description="Reset a user's password if a valid token is provided.",
+             description="<h3>Reset a user's password if a valid token is provided.</h3>",
              status_code=status.HTTP_200_OK,
              responses={
                  400: {
@@ -408,7 +408,7 @@ async def reset_password_complete(
 @router.post("/reset-password-with-old-one/",
              response_model=schemas.MessageResponseSchema,
              summary="Reset User Password With Old One",
-             description="Reset a user's password if a valid old password is provided.",
+             description="<h3>Reset a user's password if a valid old password is provided.</h3>",
              status_code=status.HTTP_200_OK,
              responses={
                  400: {
@@ -484,7 +484,7 @@ async def reset_password_with_old_one(
     response_model=schemas.UserLoginResponseSchema,
     status_code=status.HTTP_201_CREATED,
     summary="User Login",
-    description="Authenticate a user and return access and refresh tokens.",
+    description="<h3>Authenticate a user and return access and refresh tokens.</h3>",
     responses={
         401: {
             "description": "Unauthorized - Invalid email or password.",
@@ -570,7 +570,7 @@ async def user_login(
 @router.post("/refresh/",
              response_model=schemas.TokenRefreshResponseSchema,
              summary="Refresh Access Token",
-             description="Refresh the access token using a valid refresh token.",
+             description="<h3>Refresh the access token using a valid refresh token.</h3>",
              status_code=status.HTTP_200_OK,
              responses={
                  400: {
@@ -651,7 +651,7 @@ async def refresh_access_token(
              response_model=schemas.MessageResponseSchema,
              status_code=status.HTTP_200_OK,
              summary="User Logout",
-             description=("Allows users to log out of their page."),
+             description=("<h3>Allows users to log out of their page.</h3>"),
              )
 async def logout(
         data: schemas.LogoutRequestSchema,

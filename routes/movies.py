@@ -42,7 +42,47 @@ router = APIRouter()
 
 
 
-@router.get("/", response_model=MovieListResponseSchema)
+@router.get("/",
+            response_model=MovieListResponseSchema,
+            summary="Get a paginated list of movies",
+            description=(
+                    "<h3>This endpoint retrieves a paginated list of movies from the database. "
+                    "Clients can specify the `page` number and the number of items per page using `per_page`. "
+                    "The response includes details about the movies, total pages, and total items, "
+                    "along with links to the previous and next pages if applicable.\n"
+                    "The user also has the ability to:\n"
+                    "1. Search for movies by:\n"
+                    "- `Title`\n"
+                    "- `Description`\n"
+                    "- `Stars`\n"
+                    "- `Directors`\n"
+                    "2. Filter movies by:\n"
+                    "- `Genres`\n"
+                    "- `Year`\n"
+                    "- `Year range`\n"
+                    "- `IMDB range`\n"
+                    "- `Directors`\n"
+                    "- `Stars`\n"
+                    "- `Minimum and maximum price`\n"
+                    "3. Sort movies by:\n"
+                    "- `id`\n"
+                    "- `Title`\n"
+                    "- `Year`\n"
+                    "- `IMDB`\n"
+                    "- `Price`\n"
+                    "4. Set order (asc or desc)</h3>"
+            ),
+            responses={
+                404: {
+                    "description": "No movies found.",
+                    "content": {
+                        "application/json": {
+                            "example": {"detail": "No movies found."}
+                        }
+                    },
+                }
+            }
+            )
 async def get_movies(
     filters: MovieFilterSchema = Depends(),
     page: Annotated[int, Query(ge=1)] = 1,
@@ -87,8 +127,37 @@ async def get_movies(
     return response
 
 
-@router.post(
-    "/", response_model=MovieDetailSchema, status_code=status.HTTP_201_CREATED
+@router.post("/",
+             response_model=MovieDetailSchema,
+             status_code=status.HTTP_201_CREATED,
+             summary="Add a new movie",
+             description=(
+                     "<h3>This endpoint allows clients to add a new movie to the database. "
+                     "It accepts details such as name, date, genres, stars, and "
+                     "other attributes.</h3>"
+             ),
+             responses={
+                 409: {
+                     "description": "Movie already exists with same parameters.",
+                     "content": {
+                         "application/json": {
+                             "example": {
+                                 "detail": "A movie with the name '{db_movie.name}', time '{db_movie.time}' and release year '{db_movie.year}' already exists."
+                             }
+                         }
+                     },
+                 },
+                 500: {
+                     "description": "An error occurred while creating movie.",
+                     "content": {
+                         "application/json": {
+                             "example": {
+                                 "detail": "An error occurred while creating movie."
+                             }
+                         }
+                     },
+                 }
+             },
 )
 async def create_movie(
         movie: MovieCreateSchema,
@@ -176,7 +245,25 @@ async def create_movie(
         )
 
 
-@router.get("/{movie_id}/", response_model=MovieDetailSchema)
+@router.get("/{movie_id}/",
+            response_model=MovieDetailSchema,
+            summary="Get movie details by ID",
+            description=(
+                    "<h3>Fetch detailed information about a specific movie by its unique ID. "
+                    "This endpoint retrieves all available details for the movie. If the movie with the given "
+                    "ID is not found, a 404 error will be returned.</h3>"
+            ),
+            responses={
+                404: {
+                    "description": "Movie not found.",
+                    "content": {
+                        "application/json": {
+                            "example": {"detail": "Movie with the given ID was not found."}
+                        }
+                    },
+                },
+            }
+            )
 async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     movie = await check_exists_movie(db=db, movie_id=movie_id)
 
@@ -184,7 +271,35 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
 
     return movie
 
-@router.delete("/{movie_id}/", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{movie_id}/",
+               status_code=status.HTTP_204_NO_CONTENT,
+               summary="Delete a movie by ID",
+               description=(
+                       "<h3>Delete a specific movie from the database by its unique ID.</h3>"
+                       "<p>If the movie exists, it will be deleted. If it does not exist, "
+                       "a 404 error will be returned.</p>"
+               ),
+               responses={
+                   404: {
+                       "description": "Movie not found.",
+                       "content": {
+                           "application/json": {
+                               "example": {"detail": "Movie with the given ID was not found."}
+                           }
+                       },
+                   },
+                   500: {
+                       "description": "An error occurred while deleting movie.",
+                       "content": {
+                           "application/json": {
+                               "example": {
+                                   "detail": "An error occurred while deleting movie."
+                               }
+                           }
+                       },
+                 }
+               },
+               )
 async def delete_movie(
         movie_id: int,
         db: AsyncSession = Depends(get_db),
@@ -203,7 +318,35 @@ async def delete_movie(
         )
 
 
-@router.patch("/{movie_id}/", response_model=MovieDetailSchema)
+@router.patch("/{movie_id}/",
+              response_model=MovieDetailSchema,
+              summary="Update a movie by ID",
+              description=(
+                      "<h3>Update details of a specific movie by its unique ID.</h3>"
+                      "<p>This endpoint updates the details of an existing movie. If the movie with "
+                      "the given ID does not exist, a 404 error is returned.</p>"
+              ),
+              responses={
+                  404: {
+                      "description": "Movie not found.",
+                      "content": {
+                          "application/json": {
+                              "example": {"detail": "Movie with the given ID was not found."}
+                          }
+                      },
+                  },
+                  500: {
+                       "description": "An error occurred while updating movie.",
+                       "content": {
+                           "application/json": {
+                               "example": {
+                                   "detail": "An error occurred while updating movie."
+                               }
+                           }
+                       },
+                  }
+              }
+              )
 async def update_movie(
         movie_id: int,
         movie: MovieUpdateSchema,
@@ -235,8 +378,35 @@ async def update_movie(
             detail="An error occurred while updating movie."
         )
 
-@router.post(
-    "/{movie_id}/add_reaction/", response_model=MessageResponseSchema
+@router.post("/{movie_id}/add_reaction/",
+             response_model=MessageResponseSchema,
+             summary="Add reaction to the movie",
+             description=(
+                     "<h3>Add or remove reaction to the movie.</h3>"
+                     "<p>Expected value 0 - remove reaction, 1 - like, -1 - dislike. If the movie with "
+                     "the given ID does not exist, a 404 error is returned.</p>"
+             ),
+             responses={
+                 404: {
+                     "description": "Movie not found.",
+                     "content": {
+                         "application/json": {
+                             "example": {"detail": "Movie with the given ID was not found."}
+                         }
+                     },
+                 },
+                 500: {
+                     "description": "An error occurred while adding reaction.",
+                     "content": {
+                         "application/json": {
+                             "example": {
+                                 "detail": "An error occurred while adding reaction."
+                             }
+                         }
+                     },
+                 }
+             }
+
 )
 async def add_reaction(
         movie_id: int,
@@ -289,7 +459,35 @@ async def add_reaction(
         )
 
 
-@router.post("/{movie_id}/add_comment/", response_model=CommentResponseSchema)
+@router.post("/{movie_id}/add_comment/",
+             response_model=CommentResponseSchema,
+             summary="Add comment to the movie",
+             description=(
+                     "<h3>Add comment to the movie.</h3>"
+                     "<p>Endpoint apply to add comment for the movie. If the movie with "
+                     "the given ID does not exist, a 404 error is returned.</p>"
+             ),
+             responses={
+                 404: {
+                     "description": "Movie not found.",
+                     "content": {
+                         "application/json": {
+                             "example": {"detail": "Movie with the given ID was not found."}
+                         }
+                     },
+                 },
+                 500: {
+                     "description": "An error occurred while adding comment.",
+                     "content": {
+                         "application/json": {
+                             "example": {
+                                 "detail": "An error occurred while adding comment."
+                             }
+                         }
+                     },
+                 }
+             }
+             )
 async def add_comment(
         movie_id: int,
         data: CommentRequestSchema,
@@ -318,7 +516,44 @@ async def add_comment(
         )
 
 
-@router.post("/{movie_id}/add_comment/reply/", response_model=CommentReplyResponseSchema)
+@router.post("/{movie_id}/add_comment/reply/",
+             response_model=CommentReplyResponseSchema,
+             summary="Reply to the comment under the movie",
+             description=(
+                     "<h3>Reply to the comment under the movie.</h3>"
+                     "<p>Endpoint apply to reply to the comment under the movie by given ID. If the movie with "
+                     "the given ID does not exist, a 404 error is returned. If the comment with "
+                     "the given ID does not exist, a 400 error is returned</p>"
+             ),
+             responses={
+                 400: {
+                     "description": "Comment does not exist.",
+                     "content": {
+                         "application/json": {
+                             "example": {"detail": "Comment does not exist."}
+                         }
+                     },
+                 },
+                 404: {
+                     "description": "Movie not found.",
+                     "content": {
+                         "application/json": {
+                             "example": {"detail": "Movie with the given ID was not found."}
+                         }
+                     },
+                 },
+                 500: {
+                     "description": "An error occurred while adding comment.",
+                     "content": {
+                         "application/json": {
+                             "example": {
+                                 "detail": "An error occurred while adding comment."
+                             }
+                         }
+                     },
+                 }
+             }
+             )
 async def reply_comment(
         movie_id: int,
         data: CommentReplyRequestSchema,
@@ -355,8 +590,34 @@ async def reply_comment(
         )
 
 
-@router.post(
-    "/{movie_id}/add_rating/", response_model=MessageResponseSchema
+@router.post("/{movie_id}/add_rating/",
+             response_model=MessageResponseSchema,
+             summary="Add rating to the movie",
+             description=(
+                     "<h3>Add or remove rating to the movie.</h3>"
+                     "<p>Expected value in range 0 - 10 (int), 0 - remove rating, others is grade of movie. If the movie with "
+                     "the given ID does not exist, a 404 error is returned.</p>"
+             ),
+             responses={
+                 404: {
+                     "description": "Movie not found.",
+                     "content": {
+                         "application/json": {
+                             "example": {"detail": "Movie with the given ID was not found."}
+                         }
+                     },
+                 },
+                 500: {
+                     "description": "An error occurred while adding rating.",
+                     "content": {
+                         "application/json": {
+                             "example": {
+                                 "detail": "An error occurred while adding rating."
+                             }
+                         }
+                     },
+                 }
+             }
 )
 async def add_rating(
         movie_id: int,
