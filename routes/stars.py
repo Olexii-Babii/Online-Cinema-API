@@ -182,7 +182,8 @@ async def update_star(
 @router.delete("/{star_id}/",
                status_code=status.HTTP_204_NO_CONTENT,
                description=(
-                       "<h3>This endpoint allows moderators or admins to delete existing star.</h3>"
+                       "<h3>This endpoint allows moderators or admins to delete existing star."
+                       "If there is movie with star in database, genre can't be deleted.</h3>"
                ),
                responses={
                    404: {
