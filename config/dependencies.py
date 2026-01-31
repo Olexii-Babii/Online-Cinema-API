@@ -1,14 +1,8 @@
 import os
-from typing import Annotated, Optional
 
-from fastapi import Depends, Header, HTTPException, status
-from jose import ExpiredSignatureError, JWTError
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from fastapi import Depends
 
 from config.settings import Settings, TestingSettings
-from database import UserModel
 from managing.jwt_manager import JWTAuthManager
 from managing.s3_manager import S3Client
 
