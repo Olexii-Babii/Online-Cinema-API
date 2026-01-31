@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from config.dependencies import get_settings, get_s3_client
 from database import UserGroupEnum, UserGroupModel, CertificationModel, GenreModel, StarModel, DirectorModel, UserModel, \
     UserProfileModel, MovieModel, FavoriteModel, MovieReactionModel, ActivationTokenModel
-from database.engine import reset_database, get_db_contextmanager
+from database import reset_database, get_db_contextmanager
 from database.models.favorites import MoviesFavoritesModel
 from database.models.movies import MovieRatingModel, MovieCommentModel, MoviesGenresModel, StarsMoviesModel, \
     MoviesDirectorsModel

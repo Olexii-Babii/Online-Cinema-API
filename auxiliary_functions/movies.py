@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from config.dependencies import get_jwt_auth_manager
 from database import MovieModel, StarModel, DirectorModel, GenreModel, UserModel
-from database.engine import get_db
+from database import get_db
 from managing.jwt_manager import JWTAuthManager
 from schemas.movies import MovieFilterSchema
 
