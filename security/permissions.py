@@ -8,7 +8,7 @@ async def check_moder_or_admin(
         current_user: UserModel = Depends(get_current_user),
 ):
 
-    if current_user.group.name not in ["moderator", "admin"]:
+    if current_user.group.name not in ["MODERATOR", "ADMIN"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have permission to perform this action"
@@ -21,7 +21,7 @@ async def check_admin(
         current_user: UserModel = Depends(get_current_user),
 ):
 
-    if current_user.group.name != "admin":
+    if current_user.group.name != "ADMIN":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have permission to perform this action"
