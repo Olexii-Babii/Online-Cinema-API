@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from auxiliary_functions.movies import check_exists_star, get_current_user
 from database import UserModel
-from database.engine import get_db
+from database import get_db
 from database.models.movies import StarModel, StarsMoviesModel
 from schemas.movies import StarsResponseSchema, StarsRequestSchema
 from security.permissions import check_moder_or_admin

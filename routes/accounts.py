@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.dependencies import get_jwt_auth_manager
 from database import UserModel, ActivationTokenModel, UserGroupModel, PasswordResetTokenModel, RefreshTokenModel
-from database.engine import get_db
+from database import get_db
 from email_notification.email_sender import EmailSender
 from schemas import accounts as schemas
 

@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.dependencies import  get_s3_client
 from database import UserModel, UserGroupModel, UserProfileModel
-from database.engine import get_db
+from database import get_db
 from managing.s3_manager import S3Client
 from schemas.profiles import ProfileResponseSchema, ProfileRequestSchema, ProfileBaseSchema
 from auxiliary_functions.movies import get_current_user

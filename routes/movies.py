@@ -14,7 +14,7 @@ from auxiliary_functions.movies import (
 
 from auxiliary_functions.movies import get_current_user
 from database import UserModel, MovieReactionModel
-from database.engine import get_db
+from database import get_db
 from database.models.movies import (
     MovieModel,
     GenreModel,
