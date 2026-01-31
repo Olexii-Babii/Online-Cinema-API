@@ -16,7 +16,25 @@ router = APIRouter()
 
 
 
-@router.get("/", response_model=List[StarsResponseSchema])
+@router.get("/",
+            response_model=List[StarsResponseSchema],
+            summary="Get list of stars.",
+            description=(
+                    "<h3>This endpoint allows users to get list of stars.</h3>"
+            ),
+            responses={
+                404: {
+                    "description": "No stars found.",
+                    "content": {
+                        "application/json": {
+                            "example": {
+                                "detail": "No stars found."
+                            }
+                        }
+                    },
+                },
+            },
+            )
 async def get_stars(
         db: AsyncSession = Depends(get_db),
         current_user: UserModel = Depends(get_current_user)
@@ -33,7 +51,35 @@ async def get_stars(
     return stars
 
 
-@router.post("/", response_model=StarsResponseSchema, status_code=status.HTTP_201_CREATED)
+@router.post("/",
+             response_model=StarsResponseSchema,
+             status_code=status.HTTP_201_CREATED,
+             description=(
+                     "<h3>This endpoint allows moderators or admins to create new star.</h3>"
+             ),
+             responses={
+                 409: {
+                     "description": "Star already exists.",
+                     "content": {
+                         "application/json": {
+                             "example": {
+                                 "detail": "Star already exists."
+                             }
+                         }
+                     },
+                 },
+                 500: {
+                     "description": "An error occurred while creating the star.",
+                     "content": {
+                         "application/json": {
+                             "example": {
+                                 "detail": "An error occurred while creating the star."
+                             }
+                         }
+                     },
+                 },
+             },
+             )
 async def create_star(
         data: StarsRequestSchema,
         db: AsyncSession = Depends(get_db),
@@ -59,7 +105,44 @@ async def create_star(
             detail="An error occurred while creating the star."
         )
 
-@router.patch("/{star_id}/", response_model=StarsResponseSchema)
+@router.patch("/{star_id}/",
+              response_model=StarsResponseSchema,
+              description=(
+                      "<h3>This endpoint allows moderators or admins to update existing star.</h3>"
+              ),
+              responses={
+                  404: {
+                      "description": "Star with the given ID was not found.",
+                      "content": {
+                          "application/json": {
+                              "example": {
+                                  "detail": "Star with the given ID was not found."
+                              }
+                          }
+                      },
+                  },
+                  409: {
+                      "description": "Star with this name ({data.name}) already exists.",
+                      "content": {
+                          "application/json": {
+                              "example": {
+                                  "detail": "Star with this name ({data.name}) already exists."
+                              }
+                          }
+                      },
+                  },
+                  500: {
+                      "description": "An error occurred while updating the star.",
+                      "content": {
+                          "application/json": {
+                              "example": {
+                                  "detail": "An error occurred while updating the star."
+                              }
+                          }
+                      },
+                  },
+              },
+              )
 async def update_star(
         star_id: int,
         data: StarsRequestSchema,
@@ -96,7 +179,44 @@ async def update_star(
 
 
 
-@router.delete("/{star_id}/", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{star_id}/",
+               status_code=status.HTTP_204_NO_CONTENT,
+               description=(
+                       "<h3>This endpoint allows moderators or admins to delete existing star.</h3>"
+               ),
+               responses={
+                   404: {
+                       "description": "Star with the given ID was not found.",
+                       "content": {
+                           "application/json": {
+                               "example": {
+                                   "detail": "Star with the given ID was not found."
+                               }
+                           }
+                       },
+                   },
+                   409: {
+                       "description": "There are already films with this star.",
+                       "content": {
+                           "application/json": {
+                               "example": {
+                                   "detail": "There are already films with this star."
+                               }
+                           }
+                       },
+                   },
+                   500: {
+                       "description": "An error occurred while deleting the star.",
+                       "content": {
+                           "application/json": {
+                               "example": {
+                                   "detail": "An error occurred while deleting the star."
+                               }
+                           }
+                       },
+                   },
+               },
+               )
 async def delete_star(
         star_id: int,
         db: AsyncSession = Depends(get_db),
