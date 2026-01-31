@@ -2,15 +2,15 @@
   "user_groups": [
     {
       "id": 1,
-      "name": "user"
+      "name": "USER"
     },
     {
       "id": 2,
-      "name": "moderator"
+      "name": "MODERATOR"
     },
     {
       "id": 3,
-      "name": "admin"
+      "name": "ADMIN"
     }
   ],
   "users": [
