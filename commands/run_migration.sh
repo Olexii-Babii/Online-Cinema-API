@@ -16,3 +16,7 @@ echo "Applying migrations to database: $POSTGRES_DB..."
 alembic -c "$ALEMBIC_CONFIG" upgrade head
 
 echo "Migrations applied successfully!"
+
+echo "Running database populate script..."
+python -m database.populate_db
+echo "Database populate script completed."
