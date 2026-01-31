@@ -1,18 +1,12 @@
-import datetime
-import json
-
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.dependencies import get_settings, get_s3_client
-from database import UserGroupEnum, UserGroupModel, CertificationModel, GenreModel, StarModel, DirectorModel, UserModel, \
-    UserProfileModel, MovieModel, FavoriteModel, MovieReactionModel, ActivationTokenModel
+from database import UserGroupEnum, UserGroupModel, UserModel
 from database import reset_database, get_db_contextmanager
-from database.models.favorites import MoviesFavoritesModel
-from database.models.movies import MovieRatingModel, MovieCommentModel, MoviesGenresModel, StarsMoviesModel, \
-    MoviesDirectorsModel
+from database.populate_db import populate_db
 from main import app
 from managing.jwt_manager import JWTAuthManager
 from managing.s3_manager import S3Client
@@ -115,57 +109,7 @@ async def seed_user_groups(db_session: AsyncSession):
 
 @pytest_asyncio.fixture(scope="function")
 async def seed_database(db_session):
-
-    with open("tests/seed_test_data.json", "r", encoding="utf-8") as file:
-        data = json.load(file)
-
-    user_groups = [UserGroupModel(**ug) for ug in data["user_groups"]]
-    certifications = [CertificationModel(**c) for c in data["certifications"]]
-    genres = [GenreModel(**g) for g in data["genres"]]
-    stars = [StarModel(**s) for s in data["stars"]]
-    directors = [DirectorModel(**d) for d in data["directors"]]
-
-    db_session.add_all(user_groups + certifications + genres + stars + directors)
-    await db_session.flush()
-
-    users = [UserModel(**u) for u in data["users"]]
-    movies = [MovieModel(**m) for m in data["movies"]]
-
-    db_session.add_all(users + movies)
-    await db_session.flush()
-
-    users_profiles = []
-    for user_profile in data["user_profiles"]:
-        users_profiles.append(
-            UserProfileModel(
-                id=user_profile["id"],
-                first_name=user_profile["first_name"],
-                last_name=user_profile["last_name"],
-                avatar=user_profile["avatar"],
-                gender=user_profile["gender"],
-                date_of_birth=datetime.datetime.strptime(
-                    user_profile["date_of_birth"],
-                    "%Y-%m-%d"
-                ).date() if user_profile["date_of_birth"] else None,
-                info=user_profile["info"],
-                user_id=user_profile["user_id"]
-            )
-        )
-    favorites = [FavoriteModel(**f) for f in data["favorites"]]
-    reactions = [MovieReactionModel(**r) for r in data["movie_reactions"]]
-    ratings = [MovieRatingModel(**r) for r in data["movie_ratings"]]
-    comments = [MovieCommentModel(**c) for c in data["movie_comments"]]
-
-    db_session.add_all(users_profiles + favorites + reactions + ratings + comments)
-
-    await db_session.execute(MoviesGenresModel.insert(), data["movie_genres"])
-    await db_session.execute(StarsMoviesModel.insert(), data["movie_stars"])
-    await db_session.execute(MoviesDirectorsModel.insert(), data["movie_directors"])
-    await db_session.execute(MoviesFavoritesModel.insert(), data["movie_favorites"])
-
-    await db_session.flush()
-    await db_session.commit()
-
+    await populate_db(db_session=db_session)
     yield db_session
 
 
