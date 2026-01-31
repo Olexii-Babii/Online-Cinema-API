@@ -1,10 +1,10 @@
-FROM python:3.10
+FROM python:3.13
 
 # Setting environment variables for Python
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=off
-ENV ALEMBIC_CONFIG=/usr/src/alembic/alembic.ini
+ENV ALEMBIC_CONFIG=/usr/src/fast_api/alembic.ini
 
 # Installing dependencies
 RUN apt update && apt install -y \
@@ -22,7 +22,7 @@ RUN python -m pip install --upgrade pip && \
 # Copy dependency files
 COPY ./poetry.lock /usr/src/poetry/poetry.lock
 COPY ./pyproject.toml /usr/src/poetry/pyproject.toml
-COPY ./alembic.ini /usr/src/alembic/alembic.ini
+#COPY ./alembic.ini /usr/src/alembic/alembic.ini
 
 # Configure Poetry to avoid creating a virtual environment
 RUN poetry config virtualenvs.create false
@@ -38,7 +38,7 @@ RUN poetry install --no-root --only main
 WORKDIR /usr/src/fastapi
 
 # Copy the source code
-COPY ./src .
+COPY ./ .
 
 # Copy commands
 COPY ./commands /commands
