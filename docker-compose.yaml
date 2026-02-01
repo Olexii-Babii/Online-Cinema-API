@@ -18,6 +18,21 @@ services:
       retries: 5
       start_period: 20s
 
+  redis:
+    image: redis:alpine
+    container_name: redis_theater
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - theater_network
+
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin_theater
@@ -51,8 +66,31 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - .:/usr/src/fastapi
+    networks:
+      - theater_network
+
+  celery_worker:
+    build: .
+    container_name: celery_worker_theater
+    command: celery -A celery_task.celery_app worker --loglevel=info
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/usr/src/fastapi
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - .:/usr/src/fastapi
+    restart: always
     networks:
       - theater_network
 
@@ -122,12 +160,31 @@ services:
     networks:
       - theater_network
 
+  flower:
+    build: .
+    container_name: flower_theater
+    command: ["poetry", "run", "flower", "-A", "celery_worker.celery_app", "--port=5555"]
+    ports:
+      - "5555:5555"
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    networks:
+      - theater_network
+
 volumes:
   postgres_theater_data:
     driver: local
   pgadmin_theater_data:
     driver: local
   minio_data:
+    driver: local
+  redis_data:
     driver: local
 
 networks:
