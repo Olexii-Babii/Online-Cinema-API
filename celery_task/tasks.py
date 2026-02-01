@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker, Session
 
 from config.dependencies import get_settings
 from database import ActivationTokenModel
-from celery_app import celery_app
+from celery.celery_app import celery_app
 import logging
 
 logger = logging.getLogger(__name__)
