@@ -30,6 +30,10 @@ RUN poetry config virtualenvs.create false
 # Selecting a working directory
 WORKDIR /usr/src/poetry
 
+ENV PIP_DEFAULT_TIMEOUT=300
+ENV POETRY_HTTP_TIMEOUT=300
+RUN poetry config installer.max-workers 10
+
 # Install dependencies with Poetry
 RUN poetry lock
 RUN poetry install --no-root --only main
