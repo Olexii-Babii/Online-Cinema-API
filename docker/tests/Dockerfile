@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.13-slim
 
 # Setting environment variables for Python
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -27,10 +27,10 @@ WORKDIR /usr/src/poetry
 
 # Install dependencies with Poetry
 RUN poetry lock
-RUN poetry install --no-root --only main
+RUN poetry install --no-root
 
 # Selecting a working directory
 WORKDIR /usr/src/fastapi
 
 # Copy the source code
-COPY ./src .
+COPY . .
