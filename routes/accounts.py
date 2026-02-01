@@ -6,6 +6,7 @@ from sqlalchemy import select, delete
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from celery.tasks import delay_delete_activation_token
 from config.dependencies import get_jwt_auth_manager
 from database import (
     UserModel,
@@ -87,6 +88,10 @@ async def register_user(user: schemas.UserRegistrationRequestSchema,
         db.add(activation_token)
         await db.flush()
         background_tasks.add_task(email_sender.send_activation_email, activation_token.token, user.email)
+        delay_delete_activation_token.apply_async(
+            args=[activation_token.id],
+            countdown=86400
+        )
 
         await db.commit()
         await db.refresh(new_user)
@@ -261,6 +266,10 @@ async def resend_activation_email(
         db.add(activation_token)
         await db.flush()
         background_tasks.add_task(email_sender.send_activation_email, activation_token.token, db_user.email)
+        delay_delete_activation_token.apply_async(
+            args=[activation_token.id],
+            countdown=86400
+        )
 
         await db.commit()
 
