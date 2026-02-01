@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.dependencies import  get_s3_client
-from database import UserModel, UserGroupModel, UserProfileModel
+from database import UserModel, UserGroupModel, UserProfileModel, UserGroupEnum
 from database import get_db
 from managing.s3_manager import S3Client
 from schemas.profiles import ProfileResponseSchema, ProfileRequestSchema, ProfileBaseSchema
@@ -68,7 +68,7 @@ async def create_user_profile(
         )
 
     db_user_group = await db.scalar(
-        select(UserGroupModel).where(UserGroupModel.name == "admin")
+        select(UserGroupModel).where(UserGroupModel.name == UserGroupEnum.ADMIN)
     )
 
     if db_user.id != user_id and db_user.group_id != db_user_group.id:

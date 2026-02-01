@@ -7,7 +7,14 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.dependencies import get_jwt_auth_manager
-from database import UserModel, ActivationTokenModel, UserGroupModel, PasswordResetTokenModel, RefreshTokenModel
+from database import (
+    UserModel,
+    ActivationTokenModel,
+    UserGroupModel,
+    PasswordResetTokenModel,
+    RefreshTokenModel,
+    UserGroupEnum
+)
 from database import get_db
 from email_notification.email_sender import EmailSender
 from schemas import accounts as schemas
@@ -58,7 +65,7 @@ async def register_user(user: schemas.UserRegistrationRequestSchema,
             status_code=status.HTTP_409_CONFLICT,
             detail=f"A user with this email {user.email} already exists."
         )
-    db_group = await db.scalar(select(UserGroupModel).where(UserGroupModel.name == "user"))
+    db_group = await db.scalar(select(UserGroupModel).where(UserGroupModel.name == UserGroupEnum.USER))
 
     if not db_group:
         raise HTTPException(
