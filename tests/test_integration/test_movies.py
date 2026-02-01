@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pytest
 from sqlalchemy import select, or_, func
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from auxiliary_functions.movies import build_url
 from database import MovieReactionModel, UserModel
@@ -741,9 +741,11 @@ async def test_unknown_user_get_movie(
     movie_db = await db_session.scalar(select(MovieModel)
     .where(MovieModel.id == 1)
     .options(
-            joinedload(MovieModel.genres),
-            joinedload(MovieModel.stars),
-            joinedload(MovieModel.directors)
+            selectinload(MovieModel.genres),
+            selectinload(MovieModel.stars),
+            selectinload(MovieModel.directors),
+            selectinload(MovieModel.certification)
+
         ))
     response_data = response.json()
     result = {
