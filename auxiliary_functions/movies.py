@@ -153,7 +153,8 @@ async def check_exists_star(star_id: int, db: AsyncSession = Depends(get_db)):
 
 
 async def get_current_user(
-    authorization: Annotated[Optional[HTTPAuthorizationCredentials], Depends(security)] = None,
+    credentials: Annotated[Optional[HTTPAuthorizationCredentials], Depends(security)] = None,
+    authorization: Annotated[Optional[str], Header()] = None,
     jwt_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
     db: AsyncSession = Depends(get_db),
 ):
@@ -163,8 +164,14 @@ async def get_current_user(
             detail="Authorization header is missing",
         )
 
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Authorization header format. Expected 'Bearer <token>'",
+        )
+
     try:
-        payload = jwt_manager.decode_access_token(authorization.credentials)
+        payload = jwt_manager.decode_access_token(credentials.credentials)
 
     except ExpiredSignatureError:
         raise HTTPException(
