@@ -90,7 +90,7 @@ async def register_user(user: schemas.UserRegistrationRequestSchema,
         background_tasks.add_task(email_sender.send_activation_email, activation_token.token, user.email)
         delay_delete_activation_token.apply_async(
             args=[activation_token.id],
-            countdown=20
+            countdown=86400
         )
 
         await db.commit()
