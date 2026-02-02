@@ -1,0 +1,496 @@
+{
+  "user_groups": [
+    {
+      "id": 1,
+      "name": "USER"
+    },
+    {
+      "id": 2,
+      "name": "MODERATOR"
+    },
+    {
+      "id": 3,
+      "name": "ADMIN"
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "email": "john.doe@example.com",
+      "password": "Password12340@",
+      "is_active": true,
+      "group_id": 1
+    },
+    {
+      "id": 2,
+      "email": "jane.smith@example.com",
+      "password": "Password12346@",
+      "is_active": true,
+      "group_id": 1
+    },
+    {
+      "id": 3,
+      "email": "admin@example.com",
+      "password": "Password12347@",
+      "is_active": true,
+      "group_id": 3
+    },
+    {
+      "id": 4,
+      "email": "moderator@example.com",
+      "password": "Password12348@",
+      "is_active": true,
+      "group_id": 2
+    }
+  ],
+  "user_profiles": [
+    {
+      "id": 1,
+      "first_name": "John",
+      "last_name": "Doe",
+      "avatar": "https://example.com/avatars/john.jpg",
+      "gender": "man",
+      "date_of_birth": "1990-05-15",
+      "info": "Movie enthusiast and avid film critic",
+      "user_id": 1
+    },
+    {
+      "id": 2,
+      "first_name": "Jane",
+      "last_name": "Smith",
+      "avatar": "https://example.com/avatars/jane.jpg",
+      "gender": "woman",
+      "date_of_birth": "1988-08-22",
+      "info": "Love classic cinema and indie films",
+      "user_id": 2
+    },
+    {
+      "id": 3,
+      "first_name": "Admin",
+      "last_name": "User",
+      "avatar": null,
+      "gender": null,
+      "date_of_birth": null,
+      "info": null,
+      "user_id": 3
+    },
+    {
+      "id": 4,
+      "first_name": "Mike",
+      "last_name": "Moderator",
+      "avatar": null,
+      "gender": "man",
+      "date_of_birth": "1992-03-10",
+      "info": "Community moderator",
+      "user_id": 4
+    }
+  ],
+  "certifications": [
+    {
+      "id": 1,
+      "name": "G"
+    },
+    {
+      "id": 2,
+      "name": "PG"
+    },
+    {
+      "id": 3,
+      "name": "PG-13"
+    },
+    {
+      "id": 4,
+      "name": "R"
+    },
+    {
+      "id": 5,
+      "name": "NC-17"
+    }
+  ],
+  "genres": [
+    {
+      "id": 1,
+      "name": "Action"
+    },
+    {
+      "id": 2,
+      "name": "Drama"
+    },
+    {
+      "id": 3,
+      "name": "Comedy"
+    },
+    {
+      "id": 4,
+      "name": "Sci-Fi"
+    },
+    {
+      "id": 5,
+      "name": "Thriller"
+    },
+    {
+      "id": 6,
+      "name": "Romance"
+    },
+    {
+      "id": 7,
+      "name": "Horror"
+    },
+    {
+      "id": 8,
+      "name": "Adventure"
+    }
+  ],
+  "stars": [
+    {
+      "id": 1,
+      "name": "Leonardo DiCaprio"
+    },
+    {
+      "id": 2,
+      "name": "Tom Hanks"
+    },
+    {
+      "id": 3,
+      "name": "Meryl Streep"
+    },
+    {
+      "id": 4,
+      "name": "Robert Downey Jr."
+    },
+    {
+      "id": 5,
+      "name": "Scarlett Johansson"
+    },
+    {
+      "id": 6,
+      "name": "Morgan Freeman"
+    },
+    {
+      "id": 7,
+      "name": "Cillian Murphy"
+    }
+  ],
+  "directors": [
+    {
+      "id": 1,
+      "name": "Christopher Nolan"
+    },
+    {
+      "id": 2,
+      "name": "Steven Spielberg"
+    },
+    {
+      "id": 3,
+      "name": "Martin Scorsese"
+    },
+    {
+      "id": 4,
+      "name": "Quentin Tarantino"
+    },
+    {
+      "id": 5,
+      "name": "Denis Villeneuve"
+    }
+  ],
+  "movies": [
+    {
+      "id": 1,
+      "name": "Inception",
+      "year": 2010,
+      "time": 148,
+      "imdb": 8.8,
+      "votes": 2300000,
+      "meta_score": 74.0,
+      "gross": 829895144.0,
+      "description": "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.",
+      "price": 14.99,
+      "certification_id": 3
+    },
+    {
+      "id": 2,
+      "name": "The Shawshank Redemption",
+      "year": 1994,
+      "time": 142,
+      "imdb": 9.3,
+      "votes": 2700000,
+      "meta_score": 82.0,
+      "gross": 28341469.0,
+      "description": "Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.",
+      "price": 12.99,
+      "certification_id": 4
+    },
+    {
+      "id": 3,
+      "name": "The Dark Knight",
+      "year": 2008,
+      "time": 152,
+      "imdb": 9.0,
+      "votes": 2600000,
+      "meta_score": 84.0,
+      "gross": 1004558444.0,
+      "description": "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests.",
+      "price": 15.99,
+      "certification_id": 3
+    },
+    {
+      "id": 4,
+      "name": "Forrest Gump",
+      "year": 1994,
+      "time": 142,
+      "imdb": 8.8,
+      "votes": 2100000,
+      "meta_score": 82.0,
+      "gross": 678226465.0,
+      "description": "The presidencies of Kennedy and Johnson, the Vietnam War, and other historical events unfold from the perspective of an Alabama man with an IQ of 75.",
+      "price": 11.99,
+      "certification_id": 3
+    },
+    {
+      "id": 5,
+      "name": "Oppenheimer",
+      "year": 2023,
+      "time": 180,
+      "imdb": 8.3,
+      "votes": 700000,
+      "meta_score": 90.0,
+      "gross": 952000000.0,
+      "description": "The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb.",
+      "price": 19.99,
+      "certification_id": 4
+    }
+  ],
+  "movie_genres": [
+    {
+      "movie_id": 1,
+      "genre_id": 1
+    },
+    {
+      "movie_id": 1,
+      "genre_id": 4
+    },
+    {
+      "movie_id": 1,
+      "genre_id": 5
+    },
+    {
+      "movie_id": 2,
+      "genre_id": 2
+    },
+    {
+      "movie_id": 3,
+      "genre_id": 1
+    },
+    {
+      "movie_id": 3,
+      "genre_id": 2
+    },
+    {
+      "movie_id": 3,
+      "genre_id": 5
+    },
+    {
+      "movie_id": 4,
+      "genre_id": 2
+    },
+    {
+      "movie_id": 4,
+      "genre_id": 6
+    },
+    {
+      "movie_id": 5,
+      "genre_id": 2
+    },
+    {
+      "movie_id": 5,
+      "genre_id": 5
+    }
+  ],
+  "movie_stars": [
+    {
+      "movie_id": 1,
+      "stars_id": 1
+    },
+    {
+      "movie_id": 2,
+      "stars_id": 6
+    },
+    {
+      "movie_id": 3,
+      "stars_id": 1
+    },
+    {
+      "movie_id": 4,
+      "stars_id": 2
+    },
+    {
+      "movie_id": 5,
+      "stars_id": 7
+    },
+    {
+      "movie_id": 5,
+      "stars_id": 4
+    }
+  ],
+  "movie_directors": [
+    {
+      "movie_id": 1,
+      "director_id": 2
+    },
+    {
+      "movie_id": 3,
+      "director_id": 1
+    },
+    {
+      "movie_id": 4,
+      "director_id": 2
+    },
+    {
+      "movie_id": 5,
+      "director_id": 3
+    }
+  ],
+  "favorites": [
+    {
+      "id": 1,
+      "user_id": 1
+    },
+    {
+      "id": 2,
+      "user_id": 2
+    }
+  ],
+  "movie_favorites": [
+    {
+      "movie_id": 1,
+      "favorite_id": 1
+    },
+    {
+      "movie_id": 2,
+      "favorite_id": 1
+    },
+    {
+      "movie_id": 3,
+      "favorite_id": 1
+    },
+    {
+      "movie_id": 5,
+      "favorite_id": 1
+    },
+    {
+      "movie_id": 2,
+      "favorite_id": 2
+    },
+    {
+      "movie_id": 4,
+      "favorite_id": 2
+    }
+  ],
+  "movie_reactions": [
+    {
+      "id": 1,
+      "value": 1,
+      "movie_id": 1,
+      "user_id": 1
+    },
+    {
+      "id": 2,
+      "value": 1,
+      "movie_id": 2,
+      "user_id": 1
+    },
+    {
+      "id": 3,
+      "value": 1,
+      "movie_id": 3,
+      "user_id": 1
+    },
+    {
+      "id": 4,
+      "value": -1,
+      "movie_id": 4,
+      "user_id": 2
+    },
+    {
+      "id": 5,
+      "value": 1,
+      "movie_id": 2,
+      "user_id": 2
+    }
+  ],
+  "movie_ratings": [
+    {
+      "id": 1,
+      "value": 9,
+      "movie_id": 1,
+      "user_id": 1
+    },
+    {
+      "id": 2,
+      "value": 10,
+      "movie_id": 2,
+      "user_id": 1
+    },
+    {
+      "id": 3,
+      "value": 9,
+      "movie_id": 3,
+      "user_id": 1
+    },
+    {
+      "id": 4,
+      "value": 7,
+      "movie_id": 4,
+      "user_id": 2
+    },
+    {
+      "id": 5,
+      "value": 10,
+      "movie_id": 2,
+      "user_id": 2
+    },
+    {
+      "id": 6,
+      "value": 8,
+      "movie_id": 5,
+      "user_id": 1
+    }
+  ],
+  "movie_comments": [
+    {
+      "id": 1,
+      "text": "Absolutely mind-bending! One of the best sci-fi movies ever made.",
+      "movie_id": 1,
+      "user_id": 1,
+      "parent_id": null
+    },
+    {
+      "id": 2,
+      "text": "A masterpiece! The acting and storytelling are phenomenal.",
+      "movie_id": 2,
+      "user_id": 1,
+      "parent_id": null
+    },
+    {
+      "id": 3,
+      "text": "I completely agree! Tim Robbins and Morgan Freeman were incredible.",
+      "movie_id": 2,
+      "user_id": 2,
+      "parent_id": 2
+    },
+    {
+      "id": 4,
+      "text": "Heath Ledger's Joker is unforgettable. RIP.",
+      "movie_id": 3,
+      "user_id": 2,
+      "parent_id": null
+    },
+    {
+      "id": 5,
+      "text": "Such a heartwarming and touching story.",
+      "movie_id": 4,
+      "user_id": 2,
+      "parent_id": null
+    }
+  ]
+}
