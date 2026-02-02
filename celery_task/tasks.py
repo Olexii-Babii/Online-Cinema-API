@@ -12,7 +12,7 @@ settings = get_settings()
 sync_engine = create_engine(settings.SYNC_DATABASE_URL)
 SyncSessionLocal = sessionmaker(bind=sync_engine, class_=Session)
 
-@celery_app.task(name="app.tasks.delay_delete_activation_token")
+@celery_app.task(name="delay_delete_activation_token")
 def delay_delete_activation_token(token_id: int):
     with SyncSessionLocal() as db:
         result = db.execute(
