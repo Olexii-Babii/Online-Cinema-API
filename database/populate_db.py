@@ -2,7 +2,7 @@ import asyncio
 import json
 import datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import UserGroupModel, CertificationModel, GenreModel, StarModel, DirectorModel, UserModel, MovieModel, \
@@ -13,7 +13,7 @@ from database.models.movies import MovieRatingModel, MovieCommentModel, MoviesGe
 from database import get_db_contextmanager
 
 
-async def populate_db(db_session: AsyncSession):
+async def populate_db(db_session: AsyncSession, postgres_db: bool = None):
     with open("tests/seed_test_data.json", "r", encoding="utf-8") as file:
         data = json.load(file)
 
@@ -63,6 +63,28 @@ async def populate_db(db_session: AsyncSession):
     await db_session.execute(MoviesFavoritesModel.insert(), data["movie_favorites"])
 
     await db_session.flush()
+
+    if postgres_db:
+        tables_to_reset = [
+            "users",
+            "user_profiles",
+            "favorites",
+            "certifications",
+            "movie_reactions",
+            "movie_comments",
+            "movie_ratings",
+            "movies",
+            "genres",
+            "directors",
+            "stars",
+
+        ]
+
+        for table in tables_to_reset:
+            await db_session.execute(text(
+                f"SELECT setval(pg_get_serial_sequence('{table}', 'id'), "
+                f"coalesce((SELECT max(id) FROM {table}), 0) + 1, false);"
+            ))
     await db_session.commit()
 
 
@@ -76,7 +98,7 @@ async def main():
     async with get_db_contextmanager() as db_session:
         if await check_is_empty_db(db_session=db_session):
             try:
-                await populate_db(db_session=db_session)
+                await populate_db(db_session=db_session, postgres_db=True)
                 print("Database populated successfully")
             except Exception as e:
                 print(f"Database failed to populate: {e}")
