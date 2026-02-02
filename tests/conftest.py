@@ -1,3 +1,6 @@
+from unittest.mock import patch
+
+import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy import insert, select
@@ -155,3 +158,9 @@ async def create_test_moder(db_session: AsyncSession, seed_database):
     await db_session.commit()
 
     yield moder
+
+
+@pytest.fixture(autouse=True)
+def mock_celery_tasks():
+    with patch("routes.accounts.delay_delete_activation_token.apply_async") as mocked_task:
+        yield mocked_task
