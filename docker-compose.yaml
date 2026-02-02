@@ -86,8 +86,8 @@ services:
       - .env
     environment:
       - PYTHONPATH=/usr/src/fastapi
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis_theater:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis_theater:6379/0
     volumes:
       - .:/usr/src/fastapi
     restart: always
@@ -163,7 +163,7 @@ services:
   flower:
     build: .
     container_name: flower_theater
-    command: ["poetry", "run", "flower", "-A", "celery_worker.celery_app", "--port=5555"]
+    command: celery -A celery_task.celery_app flower --port=5555
     ports:
       - "5555:5555"
     depends_on:
@@ -172,8 +172,8 @@ services:
     env_file:
       - .env
     environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis_theater:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis_theater:6379/0
     networks:
       - theater_network
 
