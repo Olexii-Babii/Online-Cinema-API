@@ -2,6 +2,7 @@ from typing import Annotated, Optional
 from urllib.parse import urlencode
 
 from fastapi import Depends, HTTPException, status, Header
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, ExpiredSignatureError
 from sqlalchemy import Select, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +14,8 @@ from database import get_db
 from managing.jwt_manager import JWTAuthManager
 from schemas.movies import MovieFilterSchema
 
+
+security = HTTPBearer(auto_error=False)
 
 async def filtering_movie(query: Select, filters: MovieFilterSchema):
     need_distinct = False
@@ -150,7 +153,7 @@ async def check_exists_star(star_id: int, db: AsyncSession = Depends(get_db)):
 
 
 async def get_current_user(
-    authorization: Annotated[Optional[str], Header()] = None,
+    authorization: Annotated[Optional[HTTPAuthorizationCredentials], Depends(security)] = None,
     jwt_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
     db: AsyncSession = Depends(get_db),
 ):
@@ -161,7 +164,7 @@ async def get_current_user(
         )
 
     try:
-        payload = jwt_manager.decode_access_token(authorization.split(" ")[1])
+        payload = jwt_manager.decode_access_token(authorization.credentials)
 
     except ExpiredSignatureError:
         raise HTTPException(
