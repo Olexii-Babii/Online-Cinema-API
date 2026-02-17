@@ -10,7 +10,9 @@ from sqlalchemy import (
     UniqueConstraint,
     ForeignKey,
     Table,
-    Column, Integer, Text,
+    Column,
+    Integer,
+    Text,
 )
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
@@ -130,6 +132,7 @@ class CertificationModel(Base):
     def __repr__(self):
         return f"<Certification(name='{self.name}')>"
 
+
 class MovieModel(Base):
     __tablename__ = "movies"
 
@@ -144,11 +147,12 @@ class MovieModel(Base):
     gross: Mapped[float] = mapped_column(Float, nullable=True)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     price: Mapped[DECIMAL] = mapped_column(DECIMAL(10, 2), nullable=True)
-    certification_id: Mapped[int] = mapped_column(ForeignKey("certifications.id"), nullable=False)
+    certification_id: Mapped[int] = mapped_column(
+        ForeignKey("certifications.id"), nullable=False
+    )
     certification: Mapped["CertificationModel"] = relationship(
         "CertificationModel", back_populates="movies"
     )
-
 
     genres: Mapped[list["GenreModel"]] = relationship(
         "GenreModel", secondary=MoviesGenresModel, back_populates="movies"
@@ -178,7 +182,9 @@ class MovieModel(Base):
         "MovieRatingModel", back_populates="movie"
     )
 
-    __table_args__ = (UniqueConstraint("name", "year", "time", name="unique_movie_constraint"),)
+    __table_args__ = (
+        UniqueConstraint("name", "year", "time", name="unique_movie_constraint"),
+    )
 
     @classmethod
     def default_order_by(cls):
@@ -187,24 +193,19 @@ class MovieModel(Base):
     def __repr__(self):
         return f"<Movie(name='{self.name}', release_year='{self.year}', score_imdb={self.imdb})>"
 
+
 class MovieReactionModel(Base):
     __tablename__ = "movie_reactions"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    value: Mapped[ReactionEnum] = mapped_column(SQLAlchemyEnum(ReactionEnum), nullable=False)
-    movie_id: Mapped[int] = mapped_column(
-        ForeignKey("movies.id", ondelete="CASCADE")
+    value: Mapped[ReactionEnum] = mapped_column(
+        SQLAlchemyEnum(ReactionEnum), nullable=False
     )
-    movie: Mapped["MovieModel"] = relationship(
-        "MovieModel", back_populates="reactions"
-    )
+    movie_id: Mapped[int] = mapped_column(ForeignKey("movies.id", ondelete="CASCADE"))
+    movie: Mapped["MovieModel"] = relationship("MovieModel", back_populates="reactions")
 
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE")
-    )
-    user: Mapped["UserModel"] = relationship(
-        "UserModel", back_populates="reactions"
-    )
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    user: Mapped["UserModel"] = relationship("UserModel", back_populates="reactions")
 
     __table_args__ = (
         UniqueConstraint("movie_id", "user_id", name="unique_user_movie_reaction"),
@@ -216,22 +217,16 @@ class MovieCommentModel(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     text: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), nullable=False
+    )
     parent_id: Mapped[int] = mapped_column(Integer, nullable=True)
 
-    movie_id: Mapped[int] = mapped_column(
-        ForeignKey("movies.id", ondelete="CASCADE")
-    )
-    movie: Mapped["MovieModel"] = relationship(
-        "MovieModel", back_populates="comments"
-    )
+    movie_id: Mapped[int] = mapped_column(ForeignKey("movies.id", ondelete="CASCADE"))
+    movie: Mapped["MovieModel"] = relationship("MovieModel", back_populates="comments")
 
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE")
-    )
-    user: Mapped["UserModel"] = relationship(
-        "UserModel", back_populates="comments"
-    )
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    user: Mapped["UserModel"] = relationship("UserModel", back_populates="comments")
 
 
 class MovieRatingModel(Base):
@@ -239,19 +234,11 @@ class MovieRatingModel(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     value: Mapped[int] = mapped_column(Integer, nullable=False)
-    movie_id: Mapped[int] = mapped_column(
-        ForeignKey("movies.id", ondelete="CASCADE")
-    )
-    movie: Mapped["MovieModel"] = relationship(
-        "MovieModel", back_populates="ratings"
-    )
+    movie_id: Mapped[int] = mapped_column(ForeignKey("movies.id", ondelete="CASCADE"))
+    movie: Mapped["MovieModel"] = relationship("MovieModel", back_populates="ratings")
 
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE")
-    )
-    user: Mapped["UserModel"] = relationship(
-        "UserModel", back_populates="ratings"
-    )
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    user: Mapped["UserModel"] = relationship("UserModel", back_populates="ratings")
 
     __table_args__ = (
         UniqueConstraint("movie_id", "user_id", name="unique_user_movie_rating"),

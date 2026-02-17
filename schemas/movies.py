@@ -68,7 +68,6 @@ class MovieCreateSchema(BaseModel):
     directors: List[str]
 
 
-
 class MovieDetailSchema(BaseModel):
     id: int
     year: int
@@ -98,7 +97,6 @@ class MovieUpdateSchema(BaseModel):
     description: Optional[str] = None
     price: Optional[Decimal] = None
 
-
     @field_validator("name")
     @classmethod
     def name_validation(cls, name: str | None):
@@ -122,7 +120,6 @@ class MovieUpdateSchema(BaseModel):
             if not (imdb >= 0 and imdb <= 10):
                 raise ValueError
             return imdb
-
 
     @field_validator("time")
     @classmethod
@@ -205,22 +202,29 @@ class MovieSortField(str, Enum):
     IMDB = "imdb"
 
 
-
 class MovieFilterSchema(BaseModel):
-    search: Optional[str] = Field(None, min_length=1, max_length=100, description="Search by movie name")
+    search: Optional[str] = Field(
+        None, min_length=1, max_length=100, description="Search by movie name"
+    )
 
-    genres: Optional[str] = Field(None, description="Filter by genres (comma-separated)")
-
+    genres: Optional[str] = Field(
+        None, description="Filter by genres (comma-separated)"
+    )
 
     year: Optional[int] = Field(None, ge=1900, le=2030, description="Exact year")
     year_from: Optional[int] = Field(None, ge=1900, le=2030, description="Year from")
     year_to: Optional[int] = Field(None, ge=1900, le=2030, description="Year to")
 
-    imdb_min: Optional[float] = Field(None, ge=0, le=10, description="Minimum IMDB rating")
-    imdb_max: Optional[float] = Field(None, ge=0, le=10, description="Maximum IMDB rating")
+    imdb_min: Optional[float] = Field(
+        None, ge=0, le=10, description="Minimum IMDB rating"
+    )
+    imdb_max: Optional[float] = Field(
+        None, ge=0, le=10, description="Maximum IMDB rating"
+    )
 
-
-    directors: Optional[str] = Field(None, description="Filter by directors (comma-separated)")
+    directors: Optional[str] = Field(
+        None, description="Filter by directors (comma-separated)"
+    )
 
     stars: Optional[str] = Field(None, description="Filter by stars (comma-separated)")
 
@@ -228,13 +232,9 @@ class MovieFilterSchema(BaseModel):
     price_max: Optional[float] = Field(None, ge=0, description="Maximum price")
 
     sort_by: Optional[MovieSortField] = Field(
-        MovieSortField.ID,
-        description="Field to sort by"
+        MovieSortField.ID, description="Field to sort by"
     )
-    order: SortOrder = Field(
-        SortOrder.DESC,
-        description="Sort order (asc or desc)"
-    )
+    order: SortOrder = Field(SortOrder.DESC, description="Sort order (asc or desc)")
 
     @field_validator("year_to")
     def validate_year_range(cls, v, values):

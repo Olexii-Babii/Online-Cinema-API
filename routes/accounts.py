@@ -14,7 +14,7 @@ from database import (
     UserGroupModel,
     PasswordResetTokenModel,
     RefreshTokenModel,
-    UserGroupEnum
+    UserGroupEnum,
 )
 from database import get_db
 from email_notification.email_sender import EmailSender
@@ -28,57 +28,58 @@ router = APIRouter()
 email_sender = EmailSender()
 
 
-@router.post("/register/",
-             response_model=schemas.UserRegistrationResponseSchema,
-             summary="User Registration",
-             description="<h3>Register a new user with an email and password.</h3>",
-             status_code=status.HTTP_201_CREATED,
-             responses={
-                 409: {
-                     "description": "Conflict - User with this email already exists.",
-                     "content": {
-                         "application/json": {
-                             "example": {
-                                 "detail": "A user with this email test@example.com already exists."
-                             }
-                         }
-                     },
-                 },
-                 500: {
-                     "description": "Internal Server Error - An error occurred during user creation.",
-                     "content": {
-                         "application/json": {
-                             "example": {
-                                 "detail": "An error occurred during user creation."
-                             }
-                         }
-                     },
-                 },
-             }
-             )
-async def register_user(user: schemas.UserRegistrationRequestSchema,
-                        background_tasks: BackgroundTasks,
-                        db: AsyncSession = Depends(get_db)):
+@router.post(
+    "/register/",
+    response_model=schemas.UserRegistrationResponseSchema,
+    summary="User Registration",
+    description="<h3>Register a new user with an email and password.</h3>",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        409: {
+            "description": "Conflict - User with this email already exists.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "A user with this email test@example.com already exists."
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Internal Server Error - An error occurred during user creation.",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "An error occurred during user creation."}
+                }
+            },
+        },
+    },
+)
+async def register_user(
+    user: schemas.UserRegistrationRequestSchema,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+):
     db_user = await db.scalar(select(UserModel).where(UserModel.email == user.email))
 
     if db_user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"A user with this email {user.email} already exists."
+            detail=f"A user with this email {user.email} already exists.",
         )
-    db_group = await db.scalar(select(UserGroupModel).where(UserGroupModel.name == UserGroupEnum.USER))
+    db_group = await db.scalar(
+        select(UserGroupModel).where(UserGroupModel.name == UserGroupEnum.USER)
+    )
 
     if not db_group:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Default user group not found."
+            detail="Default user group not found.",
         )
 
     try:
         new_user = UserModel(
-            email=user.email,
-            password=user.password,
-            group_id=db_group.id
+            email=user.email, password=user.password, group_id=db_group.id
         )
         db.add(new_user)
         await db.flush()
@@ -87,10 +88,11 @@ async def register_user(user: schemas.UserRegistrationRequestSchema,
         )
         db.add(activation_token)
         await db.flush()
-        background_tasks.add_task(email_sender.send_activation_email, activation_token.token, user.email)
+        background_tasks.add_task(
+            email_sender.send_activation_email, activation_token.token, user.email
+        )
         delay_delete_activation_token.apply_async(
-            args=[activation_token.id],
-            countdown=86400
+            args=[activation_token.id], countdown=86400
         )
 
         await db.commit()
@@ -106,64 +108,60 @@ async def register_user(user: schemas.UserRegistrationRequestSchema,
         )
 
 
-@router.post("/activate/",
-             response_model=schemas.MessageResponseSchema,
-             summary="Activate User Account",
-             description="<h3>Activate a user's account using their email and activation token.</h3>",
-             status_code=status.HTTP_200_OK,
-             responses={
-                 400: {
-                     "description": "Bad Request - The activation token is invalid or expired, "
-                                    "or the user account is already active.",
-                     "content": {
-                         "application/json": {
-                             "examples": {
-                                 "invalid_token": {
-                                     "summary": "Invalid Token",
-                                     "value": {
-                                         "detail": "Invalid or expired activation token."
-                                     }
-                                 },
-                                 "already_active": {
-                                     "summary": "Account Already Active",
-                                     "value": {
-                                         "detail": "User account is already active."
-                                     }
-                                 },
-                             }
-                         }
-                     },
-                 },
-                 500: {
-                     "description": "Internal Server Error - An error occurred during user activation account.",
-                     "content": {
-                         "application/json": {
-                             "example": {
-                                 "detail": "An error occurred during activation."
-                             }
-                         }
-                     },
-                 },
-             },
-
-             )
+@router.post(
+    "/activate/",
+    response_model=schemas.MessageResponseSchema,
+    summary="Activate User Account",
+    description="<h3>Activate a user's account using their email and activation token.</h3>",
+    status_code=status.HTTP_200_OK,
+    responses={
+        400: {
+            "description": "Bad Request - The activation token is invalid or expired, "
+            "or the user account is already active.",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "invalid_token": {
+                            "summary": "Invalid Token",
+                            "value": {"detail": "Invalid or expired activation token."},
+                        },
+                        "already_active": {
+                            "summary": "Account Already Active",
+                            "value": {"detail": "User account is already active."},
+                        },
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Internal Server Error - An error occurred during user activation account.",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "An error occurred during activation."}
+                }
+            },
+        },
+    },
+)
 async def activate_user(
-        background_tasks: BackgroundTasks,
-        data: schemas.UserActivationRequestSchema,
-        db: AsyncSession = Depends(get_db)
+    background_tasks: BackgroundTasks,
+    data: schemas.UserActivationRequestSchema,
+    db: AsyncSession = Depends(get_db),
 ):
 
     db_user = await db.scalar(select(UserModel).where(UserModel.email == data.email))
-    db_token = await db.scalar(select(ActivationTokenModel).where(ActivationTokenModel.token == data.token))
+    db_token = await db.scalar(
+        select(ActivationTokenModel).where(ActivationTokenModel.token == data.token)
+    )
 
     if db_token:
         expires_at = cast(datetime, db_token.expires_at).replace(tzinfo=timezone.utc)
 
     if (
-            not db_user
-            or not db_token
-            or db_token.user_id != db_user.id
-            or datetime.now(timezone.utc) > expires_at
+        not db_user
+        or not db_token
+        or db_token.user_id != db_user.id
+        or datetime.now(timezone.utc) > expires_at
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -179,8 +177,14 @@ async def activate_user(
     try:
         db_user.is_active = True
 
-        await db.execute(delete(ActivationTokenModel).where(ActivationTokenModel.user_id == db_user.id))
-        background_tasks.add_task(email_sender.send_activation_complete_email, db_user.email)
+        await db.execute(
+            delete(ActivationTokenModel).where(
+                ActivationTokenModel.user_id == db_user.id
+            )
+        )
+        background_tasks.add_task(
+            email_sender.send_activation_complete_email, db_user.email
+        )
         await db.commit()
 
         return {"message": "User account activated successfully."}
@@ -194,52 +198,45 @@ async def activate_user(
         )
 
 
-@router.post("/resend-activation/",
-             response_model=schemas.MessageResponseSchema,
-             summary="Request Resend Activation Token",
-             description=(
-                     "<h3>Allows users to re-obtain an activation token.</h3>"
-             ),
-             status_code=status.HTTP_200_OK,
-             responses={
-                 400: {
-                     "description": "Bad Request - The activation token is already exists, "
-                                    "or the user account is already active.",
-                     "content": {
-                         "application/json": {
-                             "examples": {
-                                 "invalid_token": {
-                                     "summary": "Token Already Exists",
-                                     "value": {
-                                         "detail": "Token is already exists."
-                                     }
-                                 },
-                                 "already_active": {
-                                     "summary": "Account Already Active",
-                                     "value": {
-                                         "detail": "User account is already active."
-                                     }
-                                 },
-                             }
-                         }
-                     },
-                 },
-                 500: {
-                     "description": "Internal Server Error - An error occurred during creation activation token.",
-                     "content": {
-                         "application/json": {
-                             "example": {
-                                 "detail": "An error occurred during token creation."
-                             }
-                         }
-                     },
-                 },
-             },
-             )
+@router.post(
+    "/resend-activation/",
+    response_model=schemas.MessageResponseSchema,
+    summary="Request Resend Activation Token",
+    description=("<h3>Allows users to re-obtain an activation token.</h3>"),
+    status_code=status.HTTP_200_OK,
+    responses={
+        400: {
+            "description": "Bad Request - The activation token is already exists, "
+            "or the user account is already active.",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "invalid_token": {
+                            "summary": "Token Already Exists",
+                            "value": {"detail": "Token is already exists."},
+                        },
+                        "already_active": {
+                            "summary": "Account Already Active",
+                            "value": {"detail": "User account is already active."},
+                        },
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Internal Server Error - An error occurred during creation activation token.",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "An error occurred during token creation."}
+                }
+            },
+        },
+    },
+)
 async def resend_activation_email(
-        background_tasks: BackgroundTasks,
-        data: schemas.EmailRequestSchema,
-        db: AsyncSession = Depends(get_db)
+    background_tasks: BackgroundTasks,
+    data: schemas.EmailRequestSchema,
+    db: AsyncSession = Depends(get_db),
 ):
     db_user = await db.scalar(select(UserModel).where(UserModel.email == data.email))
 
@@ -251,7 +248,9 @@ async def resend_activation_email(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User account is already active.",
         )
-    db_token = await db.scalar(select(ActivationTokenModel).where(ActivationTokenModel.user_id == db_user.id))
+    db_token = await db.scalar(
+        select(ActivationTokenModel).where(ActivationTokenModel.user_id == db_user.id)
+    )
 
     if db_token:
         raise HTTPException(
@@ -265,10 +264,11 @@ async def resend_activation_email(
         )
         db.add(activation_token)
         await db.flush()
-        background_tasks.add_task(email_sender.send_activation_email, activation_token.token, db_user.email)
+        background_tasks.add_task(
+            email_sender.send_activation_email, activation_token.token, db_user.email
+        )
         delay_delete_activation_token.apply_async(
-            args=[activation_token.id],
-            countdown=86400
+            args=[activation_token.id], countdown=86400
         )
 
         await db.commit()
@@ -284,19 +284,20 @@ async def resend_activation_email(
         )
 
 
-@router.post("/password-reset/request/",
-             response_model=schemas.MessageResponseSchema,
-             summary="Request Password Reset Token",
-             description=(
-                     "<h3>Allows a user to request a password reset token. If the user exists and is active, "
-                     "a new token will be generated and any existing tokens will be invalidated.</h3>"
-             ),
-             status_code=status.HTTP_200_OK,
-             )
+@router.post(
+    "/password-reset/request/",
+    response_model=schemas.MessageResponseSchema,
+    summary="Request Password Reset Token",
+    description=(
+        "<h3>Allows a user to request a password reset token. If the user exists and is active, "
+        "a new token will be generated and any existing tokens will be invalidated.</h3>"
+    ),
+    status_code=status.HTTP_200_OK,
+)
 async def password_reset_request(
-        data: schemas.EmailRequestSchema,
-        background_tasks: BackgroundTasks,
-        db: AsyncSession = Depends(get_db)
+    data: schemas.EmailRequestSchema,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
 ):
     db_user = await db.scalar(select(UserModel).where(UserModel.email == data.email))
 
@@ -313,7 +314,11 @@ async def password_reset_request(
         token = PasswordResetTokenModel(user_id=db_user.id)
         db.add(token)
         await db.flush()
-        background_tasks.add_task(email_sender.send_password_reset_email, email_to=db_user.email, token=token.token)
+        background_tasks.add_task(
+            email_sender.send_password_reset_email,
+            email_to=db_user.email,
+            token=token.token,
+        )
         await db.commit()
 
         return {
@@ -328,56 +333,57 @@ async def password_reset_request(
         )
 
 
-@router.post("/reset-password/complete/",
-             response_model=schemas.MessageResponseSchema,
-             summary="Reset User Password",
-             description="<h3>Reset a user's password if a valid token is provided.</h3>",
-             status_code=status.HTTP_200_OK,
-             responses={
-                 400: {
-                     "description": (
-                             "Bad Request - The provided email or token is invalid, "
-                             "the token has expired, or the user account is not active."
-                     ),
-                     "content": {
-                         "application/json": {
-                             "examples": {
-                                 "invalid_email_or_token": {
-                                     "summary": "Invalid Email or Token",
-                                     "value": {
-                                         "detail": "Invalid email or token."
-                                     }
-                                 },
-                                 "expired_token": {
-                                     "summary": "Expired Token",
-                                     "value": {
-                                         "detail": "Invalid email or token."
-                                     }
-                                 }
-                             }
-                         }
-                     },
-                 },
-                 500: {
-                     "description": "Internal Server Error - An error occurred while resetting the password.",
-                     "content": {
-                         "application/json": {
-                             "example": {
-                                 "detail": "An error occurred while resetting the password."
-                             }
-                         }
-                     },
-                 },
-             },
-             )
+@router.post(
+    "/reset-password/complete/",
+    response_model=schemas.MessageResponseSchema,
+    summary="Reset User Password",
+    description="<h3>Reset a user's password if a valid token is provided.</h3>",
+    status_code=status.HTTP_200_OK,
+    responses={
+        400: {
+            "description": (
+                "Bad Request - The provided email or token is invalid, "
+                "the token has expired, or the user account is not active."
+            ),
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "invalid_email_or_token": {
+                            "summary": "Invalid Email or Token",
+                            "value": {"detail": "Invalid email or token."},
+                        },
+                        "expired_token": {
+                            "summary": "Expired Token",
+                            "value": {"detail": "Invalid email or token."},
+                        },
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Internal Server Error - An error occurred while resetting the password.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "An error occurred while resetting the password."
+                    }
+                }
+            },
+        },
+    },
+)
 async def reset_password_complete(
-        data: schemas.PasswordResetCompleteRequestSchema,
-        background_tasks: BackgroundTasks,
-        db: AsyncSession = Depends(get_db),
+    data: schemas.PasswordResetCompleteRequestSchema,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
 ):
 
     db_user = await db.scalar(select(UserModel).where(UserModel.email == data.email))
-    db_token = await db.scalar(select(PasswordResetTokenModel).where(PasswordResetTokenModel.token == data.token))
+    db_token = await db.scalar(
+        select(PasswordResetTokenModel).where(
+            PasswordResetTokenModel.token == data.token
+        )
+    )
 
     if not db_user or not db_user.is_active:
         raise HTTPException(
@@ -410,7 +416,9 @@ async def reset_password_complete(
             )
         )
         await db.commit()
-        background_tasks.add_task(email_sender.send_password_reset_complete_email, email_to=db_user.email)
+        background_tasks.add_task(
+            email_sender.send_password_reset_complete_email, email_to=db_user.email
+        )
         return {"message": "Password reset successfully."}
 
     except SQLAlchemyError:
@@ -421,64 +429,65 @@ async def reset_password_complete(
         )
 
 
-@router.post("/reset-password-with-old-one/",
-             response_model=schemas.MessageResponseSchema,
-             summary="Reset User Password With Old One",
-             description="<h3>Reset a user's password if a valid old password is provided.</h3>",
-             status_code=status.HTTP_200_OK,
-             responses={
-                 400: {
-                     "description": (
-                             "Bad Request - The provided email or password is invalid, "
-                             "or the user account is not active."
-                     ),
-                     "content": {
-                         "application/json": {
-                             "examples": {
-                                 "invalid_email_or_token": {
-                                     "summary": "Invalid Email or User is Not Active",
-                                     "value": {
-                                         "detail": "Invalid email or password, or user is not active."
-                                     }
-                                 },
-                                 "expired_token": {
-                                     "summary": "Invalid Password",
-                                     "value": {
-                                         "detail": "Invalid email or password, or user is not active."
-                                     }
-                                 }
-                             }
-                         }
-                     },
-                 },
-                 500: {
-                     "description": "Internal Server Error - An error occurred while resetting the password.",
-                     "content": {
-                         "application/json": {
-                             "example": {
-                                 "detail": "An error occurred while resetting the password."
-                             }
-                         }
-                     },
-                 },
-             },
-             )
+@router.post(
+    "/reset-password-with-old-one/",
+    response_model=schemas.MessageResponseSchema,
+    summary="Reset User Password With Old One",
+    description="<h3>Reset a user's password if a valid old password is provided.</h3>",
+    status_code=status.HTTP_200_OK,
+    responses={
+        400: {
+            "description": (
+                "Bad Request - The provided email or password is invalid, "
+                "or the user account is not active."
+            ),
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "invalid_email_or_token": {
+                            "summary": "Invalid Email or User is Not Active",
+                            "value": {
+                                "detail": "Invalid email or password, or user is not active."
+                            },
+                        },
+                        "expired_token": {
+                            "summary": "Invalid Password",
+                            "value": {
+                                "detail": "Invalid email or password, or user is not active."
+                            },
+                        },
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Internal Server Error - An error occurred while resetting the password.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "An error occurred while resetting the password."
+                    }
+                }
+            },
+        },
+    },
+)
 async def reset_password_with_old_one(
-        data: schemas.PasswordWithOldResetRequestSchema,
-        db: AsyncSession = Depends(get_db),
+    data: schemas.PasswordWithOldResetRequestSchema,
+    db: AsyncSession = Depends(get_db),
 ):
     db_user = await db.scalar(select(UserModel).where(UserModel.email == data.email))
 
     if not db_user or not db_user.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid email or password, or user is not active."
+            detail="Invalid email or password, or user is not active.",
         )
 
     if not db_user.verify_password(data.old_password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid email or password, or user is not active."
+            detail="Invalid email or password, or user is not active.",
         )
 
     try:
@@ -506,9 +515,7 @@ async def reset_password_with_old_one(
             "description": "Unauthorized - Invalid email or password.",
             "content": {
                 "application/json": {
-                    "example": {
-                        "detail": "Invalid email or password."
-                    }
+                    "example": {"detail": "Invalid email or password."}
                 }
             },
         },
@@ -516,9 +523,7 @@ async def reset_password_with_old_one(
             "description": "Forbidden - User account is not activated.",
             "content": {
                 "application/json": {
-                    "example": {
-                        "detail": "User account is not activated."
-                    }
+                    "example": {"detail": "User account is not activated."}
                 }
             },
         },
@@ -539,7 +544,9 @@ async def user_login(
     db: AsyncSession = Depends(get_db),
     jwt_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
 ):
-    db_user = await db.scalar(select(UserModel).where(UserModel.email == login_data.email))
+    db_user = await db.scalar(
+        select(UserModel).where(UserModel.email == login_data.email)
+    )
 
     if (not db_user) or not db_user.verify_password(login_data.password):
         raise HTTPException(
@@ -562,7 +569,9 @@ async def user_login(
         payload_refresh_token = jwt_manager.decode_refresh_token(refresh_token)
         days_valid = payload_refresh_token["exp"] // (60 * 24)
         expires_at = datetime.now(timezone.utc) + timedelta(days=days_valid)
-        await db.execute(delete(RefreshTokenModel).where(RefreshTokenModel.user_id == db_user.id))
+        await db.execute(
+            delete(RefreshTokenModel).where(RefreshTokenModel.user_id == db_user.id)
+        )
         db_refresh_token = RefreshTokenModel(
             user_id=db_user.id,
             token=refresh_token,
@@ -583,52 +592,38 @@ async def user_login(
         )
 
 
-@router.post("/refresh/",
-             response_model=schemas.TokenRefreshResponseSchema,
-             summary="Refresh Access Token",
-             description="<h3>Refresh the access token using a valid refresh token.</h3>",
-             status_code=status.HTTP_200_OK,
-             responses={
-                 400: {
-                     "description": "Bad Request - The provided refresh token is invalid or expired.",
-                     "content": {
-                         "application/json": {
-                             "example": {
-                                 "detail": "Token has expired."
-                             }
-                         }
-                     },
-                 },
-                 401: {
-                     "description": "Unauthorized - Refresh token not found.",
-                     "content": {
-                         "application/json": {
-                             "example": {
-                                 "detail": "Refresh token not found."
-                             }
-                         }
-                     },
-                 },
-                 404: {
-                     "description": "Not Found - The user associated with the token does not exist.",
-                     "content": {
-                         "application/json": {
-                             "example": {
-                                 "detail": "User not found."
-                             }
-                         }
-                     },
-                 },
-             },
-
-             )
+@router.post(
+    "/refresh/",
+    response_model=schemas.TokenRefreshResponseSchema,
+    summary="Refresh Access Token",
+    description="<h3>Refresh the access token using a valid refresh token.</h3>",
+    status_code=status.HTTP_200_OK,
+    responses={
+        400: {
+            "description": "Bad Request - The provided refresh token is invalid or expired.",
+            "content": {
+                "application/json": {"example": {"detail": "Token has expired."}}
+            },
+        },
+        401: {
+            "description": "Unauthorized - Refresh token not found.",
+            "content": {
+                "application/json": {"example": {"detail": "Refresh token not found."}}
+            },
+        },
+        404: {
+            "description": "Not Found - The user associated with the token does not exist.",
+            "content": {"application/json": {"example": {"detail": "User not found."}}},
+        },
+    },
+)
 async def refresh_access_token(
     refresh_token: schemas.TokenRefreshRequestSchema,
     db: AsyncSession = Depends(get_db),
     jwt_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
 ):
     try:
-        payload = jwt_manager.decode_refresh_token(refresh_token.refresh_token)
+        jwt_manager.decode_refresh_token(refresh_token.refresh_token)
     except (JWTError, ExpiredSignatureError):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Token has expired."
@@ -645,7 +640,9 @@ async def refresh_access_token(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token not found."
         )
 
-    db_user = await db.scalar(select(UserModel).where(UserModel.id == db_refresh_token.user_id))
+    db_user = await db.scalar(
+        select(UserModel).where(UserModel.id == db_refresh_token.user_id)
+    )
 
     if not db_user:
         raise HTTPException(
@@ -663,16 +660,16 @@ async def refresh_access_token(
     return {"access_token": access_token}
 
 
-@router.post("/logout/",
-             response_model=schemas.MessageResponseSchema,
-             status_code=status.HTTP_200_OK,
-             summary="User Logout",
-             description=("<h3>Allows users to log out of their page.</h3>"),
-             )
-async def logout(
-        data: schemas.LogoutRequestSchema,
-        db: AsyncSession = Depends(get_db)
-):
-    await db.execute(delete(RefreshTokenModel).where(RefreshTokenModel.token == data.refresh_token))
+@router.post(
+    "/logout/",
+    response_model=schemas.MessageResponseSchema,
+    status_code=status.HTTP_200_OK,
+    summary="User Logout",
+    description=("<h3>Allows users to log out of their page.</h3>"),
+)
+async def logout(data: schemas.LogoutRequestSchema, db: AsyncSession = Depends(get_db)):
+    await db.execute(
+        delete(RefreshTokenModel).where(RefreshTokenModel.token == data.refresh_token)
+    )
     await db.commit()
     return {"message": "You have been logged out."}

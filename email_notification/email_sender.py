@@ -5,7 +5,8 @@ from config.dependencies import get_settings
 
 settings = get_settings()
 
-class EmailSender():
+
+class EmailSender:
     def __init__(self) -> None:
         self.conf = ConnectionConfig(
             MAIL_USERNAME=settings.MAIL_USERNAME,
@@ -22,36 +23,41 @@ class EmailSender():
 
     async def _send_email(self, email_to: EmailStr, subject: str, body: str) -> None:
         message = MessageSchema(
-            subject=subject,
-            recipients=[email_to],
-            body=body,
-            subtype=MessageType.plain
+            subject=subject, recipients=[email_to], body=body, subtype=MessageType.plain
         )
 
         await self.fm.send_message(message)
 
     async def send_activation_email(self, token: str, email_to: EmailStr):
         subject = "Activate your account"
-        body = ("Please confirm your email address\n"
-                f"{settings.BASE_URL}/accounts/activate?token={token}")
+        body = (
+            "Please confirm your email address\n"
+            f"{settings.BASE_URL}/accounts/activate?token={token}"
+        )
         await self._send_email(email_to=email_to, subject=subject, body=body)
 
     async def send_activation_complete_email(self, email_to: EmailStr):
         subject = "Account Activated Successfully"
-        body = ("You have successfully activated your account.\n"
-                "Below you can login your account.\n"
-                f"{settings.BASE_URL}/accounts/login/")
+        body = (
+            "You have successfully activated your account.\n"
+            "Below you can login your account.\n"
+            f"{settings.BASE_URL}/accounts/login/"
+        )
         await self._send_email(email_to=email_to, subject=subject, body=body)
 
     async def send_password_reset_email(self, email_to: EmailStr, token: str):
         subject = "Reset your password"
-        body = ("Please confirm, if you want to change password\n"
-                f"{settings.BASE_URL}/accounts/reset-password?token={token}")
+        body = (
+            "Please confirm, if you want to change password\n"
+            f"{settings.BASE_URL}/accounts/reset-password?token={token}"
+        )
         await self._send_email(email_to=email_to, subject=subject, body=body)
 
     async def send_password_reset_complete_email(self, email_to: EmailStr):
         subject = "Password Changed Successfully"
-        body = ("You have successfully changed your password.\n"
-                "Below you can login your account.\n"
-                f"{settings.BASE_URL}/accounts/login/")
+        body = (
+            "You have successfully changed your password.\n"
+            "Below you can login your account.\n"
+            f"{settings.BASE_URL}/accounts/login/"
+        )
         await self._send_email(email_to=email_to, subject=subject, body=body)

@@ -7,12 +7,12 @@ from pydantic_settings import BaseSettings
 
 load_dotenv()
 
+
 class BaseAppSettings(BaseSettings):
     BASE_DIR: Path = Path(__file__).parent
     PATH_TO_DB: str = str(BASE_DIR / "movies.db")
 
     LOGIN_TIME_DAYS: int = 7
-
 
     BASE_URL: str = os.getenv("BASE_URL", "http://127.0.0.1:8000")
     MAIL_USERNAME: str = os.getenv("MAIL_USERNAME", "testuser")
@@ -60,4 +60,4 @@ class TestingSettings(BaseAppSettings):
     JWT_SIGNING_ALGORITHM: str = "HS256"
 
     def model_post_init(self, __context: dict[str, Any] | None = None) -> None:
-        object.__setattr__(self, 'PATH_TO_DB', ":memory:")
+        object.__setattr__(self, "PATH_TO_DB", ":memory:")

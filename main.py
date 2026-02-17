@@ -18,7 +18,8 @@ app = FastAPI(
     version="1.0.0",
     openapi_version="3.1.0",
     docs_url=None,
-    redoc_url=None)
+    redoc_url=None,
+)
 
 
 security = HTTPBasic()
@@ -45,6 +46,7 @@ def authenticate_docs(credentials: HTTPBasicCredentials = Depends(security)):
 @app.get("/docs", include_in_schema=False)
 async def get_swagger(username: str = Depends(authenticate_docs)):
     return get_swagger_ui_html(openapi_url="/openapi.json", title="Docs")
+
 
 @app.get("/openapi.json", include_in_schema=False)
 async def get_open_api(username: str = Depends(authenticate_docs)):

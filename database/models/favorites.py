@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, UniqueConstraint, Table, Column
+from sqlalchemy import ForeignKey, Table, Column
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
@@ -33,7 +33,4 @@ class FavoriteModel(Base):
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), unique=True
     )
-    user: Mapped["UserModel"] = relationship(
-        "UserModel", back_populates="favorite"
-    )
-
+    user: Mapped["UserModel"] = relationship("UserModel", back_populates="favorite")

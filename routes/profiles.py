@@ -4,11 +4,15 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from config.dependencies import  get_s3_client
+from config.dependencies import get_s3_client
 from database import UserModel, UserGroupModel, UserProfileModel, UserGroupEnum
 from database import get_db
 from managing.s3_manager import S3Client
-from schemas.profiles import ProfileResponseSchema, ProfileRequestSchema, ProfileBaseSchema
+from schemas.profiles import (
+    ProfileResponseSchema,
+    ProfileRequestSchema,
+    ProfileBaseSchema,
+)
 from auxiliary_functions.movies import get_current_user
 
 router = APIRouter()
@@ -21,37 +25,33 @@ router = APIRouter()
     description="User profile creation",
     status_code=status.HTTP_201_CREATED,
     responses={
-                 400: {
-                     "description": "Bad Request - User already has a profile.",
-                     "content": {
-                         "application/json": {
-                             "example": {
-                                 "detail": "User already has a profile."
-                             }
-                         }
-                     },
-                 },
-                 401: {
-                     "description": "Unauthorized - User not found or not active.",
-                     "content": {
-                         "application/json": {
-                             "example": {
-                                 "detail": "User not found or not active."
-                             }
-                         }
-                     },
-                 },
-                 403: {
-                     "description": "Forbidden - User can not create profile for another user.",
-                     "content": {
-                         "application/json": {
-                             "example": {
-                                 "detail": "You don't have permission to edit this profile."
-                             }
-                         }
-                     },
-                 },
-    }
+        400: {
+            "description": "Bad Request - User already has a profile.",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "User already has a profile."}
+                }
+            },
+        },
+        401: {
+            "description": "Unauthorized - User not found or not active.",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "User not found or not active."}
+                }
+            },
+        },
+        403: {
+            "description": "Forbidden - User can not create profile for another user.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "You don't have permission to edit this profile."
+                    }
+                }
+            },
+        },
+    },
 )
 async def create_user_profile(
     user_id: int,
@@ -112,12 +112,7 @@ async def create_user_profile(
 
         return db_profile
 
-    except (
-        ConnectionError,
-        HTTPClientError,
-        NoCredentialsError,
-        BotoCoreError
-    ):
+    except (ConnectionError, HTTPClientError, NoCredentialsError, BotoCoreError):
         await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -132,12 +127,15 @@ async def create_user_profile(
         )
 
 
-@router.get("/me",
-            response_model=ProfileResponseSchema,
-            status_code=status.HTTP_200_OK,
-            summary="User`s profile",
-            description=("Allows the user to obtain information about themselves"),
-            )
-async def read_me(current_user: ProfileBaseSchema = Depends(get_current_user),
-                  db: AsyncSession = Depends(get_db)):
+@router.get(
+    "/me",
+    response_model=ProfileResponseSchema,
+    status_code=status.HTTP_200_OK,
+    summary="User`s profile",
+    description=("Allows the user to obtain information about themselves"),
+)
+async def read_me(
+    current_user: ProfileBaseSchema = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     return current_user

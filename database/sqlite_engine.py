@@ -7,7 +7,6 @@ from sqlalchemy.orm import sessionmaker
 from config.dependencies import get_settings
 from database import Base
 
-
 settings = get_settings()
 
 SQLALCHEMY_DATABASE_URL = f"sqlite+aiosqlite:///{settings.PATH_TO_DB}"
@@ -18,10 +17,9 @@ engine = create_async_engine(
 )
 
 AsyncSessionLocal = sessionmaker(
-    expire_on_commit=False,
-    class_=AsyncSession,
-    bind=engine
+    expire_on_commit=False, class_=AsyncSession, bind=engine
 )
+
 
 async def get_sqlite_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:

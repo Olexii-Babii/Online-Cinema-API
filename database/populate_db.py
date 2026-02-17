@@ -5,11 +5,26 @@ import datetime
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import UserGroupModel, CertificationModel, GenreModel, StarModel, DirectorModel, UserModel, MovieModel, \
-    UserProfileModel, FavoriteModel, MovieReactionModel
+from database import (
+    UserGroupModel,
+    CertificationModel,
+    GenreModel,
+    StarModel,
+    DirectorModel,
+    UserModel,
+    MovieModel,
+    UserProfileModel,
+    FavoriteModel,
+    MovieReactionModel,
+)
 from database.models.favorites import MoviesFavoritesModel
-from database.models.movies import MovieRatingModel, MovieCommentModel, MoviesGenresModel, StarsMoviesModel, \
-    MoviesDirectorsModel
+from database.models.movies import (
+    MovieRatingModel,
+    MovieCommentModel,
+    MoviesGenresModel,
+    StarsMoviesModel,
+    MoviesDirectorsModel,
+)
 from database import get_db_contextmanager
 
 
@@ -41,12 +56,15 @@ async def populate_db(db_session: AsyncSession, postgres_db: bool = None):
                 last_name=user_profile["last_name"],
                 avatar=user_profile["avatar"],
                 gender=user_profile["gender"],
-                date_of_birth=datetime.datetime.strptime(
-                    user_profile["date_of_birth"],
-                    "%Y-%m-%d"
-                ).date() if user_profile["date_of_birth"] else None,
+                date_of_birth=(
+                    datetime.datetime.strptime(
+                        user_profile["date_of_birth"], "%Y-%m-%d"
+                    ).date()
+                    if user_profile["date_of_birth"]
+                    else None
+                ),
                 info=user_profile["info"],
-                user_id=user_profile["user_id"]
+                user_id=user_profile["user_id"],
             )
         )
     favorites = [FavoriteModel(**f) for f in data["favorites"]]
@@ -77,14 +95,15 @@ async def populate_db(db_session: AsyncSession, postgres_db: bool = None):
             "genres",
             "directors",
             "stars",
-
         ]
 
         for table in tables_to_reset:
-            await db_session.execute(text(
-                f"SELECT setval(pg_get_serial_sequence('{table}', 'id'), "
-                f"coalesce((SELECT max(id) FROM {table}), 0) + 1, false);"
-            ))
+            await db_session.execute(
+                text(
+                    f"SELECT setval(pg_get_serial_sequence('{table}', 'id'), "
+                    f"coalesce((SELECT max(id) FROM {table}), 0) + 1, false);"
+                )
+            )
     await db_session.commit()
 
 

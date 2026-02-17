@@ -3,7 +3,7 @@ from jose import jwt, JWTError, ExpiredSignatureError
 from typing import Optional
 
 
-class JWTAuthManager():
+class JWTAuthManager:
     _ACCESS_KEY_TIMEDELTA_MINUTES = 10
     _REFRESH_KEY_TIMEDELTA_MINUTES = 60 * 24 * 7
 
@@ -13,7 +13,7 @@ class JWTAuthManager():
         self._algorithm = algorithm
 
     def _create_token(
-            self, data: dict, secret_key: str, expires_delta: timedelta
+        self, data: dict, secret_key: str, expires_delta: timedelta
     ) -> str:
         to_encode = data.copy()
         expire = datetime.now(timezone.utc) + expires_delta
@@ -21,7 +21,7 @@ class JWTAuthManager():
         return jwt.encode(to_encode, secret_key, algorithm=self._algorithm)
 
     def create_access_token(
-            self, data: dict, expires_delta: Optional[timedelta] = None
+        self, data: dict, expires_delta: Optional[timedelta] = None
     ) -> str:
         return self._create_token(
             data,
@@ -30,7 +30,7 @@ class JWTAuthManager():
         )
 
     def create_refresh_token(
-            self, data: dict, expires_delta: Optional[timedelta] = None
+        self, data: dict, expires_delta: Optional[timedelta] = None
     ) -> str:
         return self._create_token(
             data,
@@ -40,9 +40,7 @@ class JWTAuthManager():
 
     def _decode_token(self, secret_key: str, token: str) -> dict:
         try:
-            return jwt.decode(
-                token, secret_key, algorithms=[self._algorithm]
-            )
+            return jwt.decode(token, secret_key, algorithms=[self._algorithm])
         except ExpiredSignatureError:
             raise ExpiredSignatureError("Token expired")
         except JWTError:
