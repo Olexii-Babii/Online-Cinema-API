@@ -21,7 +21,6 @@ def get_jwt_auth_manager(settings: Settings = Depends(get_settings)) -> JWTAuthM
         algorithm=settings.JWT_SIGNING_ALGORITHM,
     )
 
+
 def get_s3_client(settings: Settings = Depends(get_settings)):
     return S3Client(settings)
-
-

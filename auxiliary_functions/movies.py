@@ -14,8 +14,8 @@ from database import get_db
 from managing.jwt_manager import JWTAuthManager
 from schemas.movies import MovieFilterSchema
 
-
 security = HTTPBearer(auto_error=False)
+
 
 async def filtering_movie(query: Select, filters: MovieFilterSchema):
     need_distinct = False
@@ -27,15 +27,13 @@ async def filtering_movie(query: Select, filters: MovieFilterSchema):
                 MovieModel.name.ilike(search_term),
                 MovieModel.description.ilike(search_term),
                 MovieModel.stars.any(StarModel.name.ilike(search_term)),
-                MovieModel.directors.any(DirectorModel.name.ilike(search_term))
+                MovieModel.directors.any(DirectorModel.name.ilike(search_term)),
             )
         )
 
     if filters.genres:
         genres = [int(genre.strip()) for genre in filters.genres.split(",")]
-        query = query.join(MovieModel.genres).where(
-            GenreModel.id.in_(genres)
-    )
+        query = query.join(MovieModel.genres).where(GenreModel.id.in_(genres))
         need_distinct = True
 
     if filters.year:
@@ -46,34 +44,26 @@ async def filtering_movie(query: Select, filters: MovieFilterSchema):
         if filters.year_to:
             query = query.where(MovieModel.year <= filters.year_to)
 
-
     if filters.imdb_min:
         query = query.where(MovieModel.imdb >= filters.imdb_min)
     if filters.imdb_max:
         query = query.where(MovieModel.imdb <= filters.imdb_max)
-
 
     if filters.directors:
         # query = query.join(MovieModel.directors).where(
         #     DirectorModel.name.ilike(f"%{filters.director}%")
         # )
         directors = [int(director.strip()) for director in filters.directors.split(",")]
-        query = query.join(MovieModel.directors).where(
-            DirectorModel.id.in_(directors)
-        )
+        query = query.join(MovieModel.directors).where(DirectorModel.id.in_(directors))
         need_distinct = True
-
 
     if filters.stars:
         # query = query.join(MovieModel.stars).where(
         #     StarModel.name.ilike(f"%{filters.star}%")
         # )
         stars = [int(star.strip()) for star in filters.stars.split(",")]
-        query = query.join(MovieModel.directors).where(
-            StarModel.id.in_(stars)
-        )
+        query = query.join(MovieModel.directors).where(StarModel.id.in_(stars))
         need_distinct = True
-
 
     if filters.price_min:
         query = query.where(MovieModel.price >= filters.price_min)
@@ -117,11 +107,7 @@ async def check_exists_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     return movie
 
 
-def build_url(
-        filters: MovieFilterSchema,
-        page: int,
-        per_page: int
-):
+def build_url(filters: MovieFilterSchema, page: int, per_page: int):
     filters = filters.model_dump(exclude_none=True, mode="json")
     filters["page"] = page
     filters["per_page"] = per_page
@@ -153,7 +139,9 @@ async def check_exists_star(star_id: int, db: AsyncSession = Depends(get_db)):
 
 
 async def get_current_user(
-    credentials: Annotated[Optional[HTTPAuthorizationCredentials], Depends(security)] = None,
+    credentials: Annotated[
+        Optional[HTTPAuthorizationCredentials], Depends(security)
+    ] = None,
     authorization: Annotated[Optional[str], Header()] = None,
     jwt_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
     db: AsyncSession = Depends(get_db),
@@ -184,11 +172,12 @@ async def get_current_user(
             detail="Invalid Authorization header format. Expected 'Bearer <token>'",
         )
 
-
     token_user_id = payload.get("user_id")
 
-    db_user = await db.scalar(select(UserModel)
-                              .options(selectinload(UserModel.group))
-                              .where(UserModel.id == token_user_id))
+    db_user = await db.scalar(
+        select(UserModel)
+        .options(selectinload(UserModel.group))
+        .where(UserModel.id == token_user_id)
+    )
 
     return db_user

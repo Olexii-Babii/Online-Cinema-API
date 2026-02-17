@@ -12,17 +12,18 @@ from managing.s3_manager import S3Client
 @pytest.mark.asyncio
 async def test_create_user_profile(e2e_client, e2e_db_session, settings, s3_client):
 
-    payload = {
-        "email": "testuser@example.com",
-        "password": "NewPassword12345@"
-    }
+    payload = {"email": "testuser@example.com", "password": "NewPassword12345@"}
 
-    user = await e2e_db_session.scalar(select(UserModel).where(UserModel.email == payload["email"]))
+    user = await e2e_db_session.scalar(
+        select(UserModel).where(UserModel.email == payload["email"])
+    )
     assert user, f"User {payload["email"]} should exist!"
 
     login_url = "/accounts/login/"
     login_response = await e2e_client.post(login_url, json=payload)
-    assert login_response.status_code == 201, "Expected status code does not match. Should be 201"
+    assert (
+        login_response.status_code == 201
+    ), "Expected status code does not match. Should be 201"
 
     tokens = login_response.json()
     access_token = tokens["access_token"]
@@ -45,7 +46,9 @@ async def test_create_user_profile(e2e_client, e2e_db_session, settings, s3_clie
     }
 
     profile_response = await e2e_client.post(profile_url, headers=headers, files=files)
-    assert profile_response.status_code == 201, "Expected status code does not match. Should be 201"
+    assert (
+        profile_response.status_code == 201
+    ), "Expected status code does not match. Should be 201"
 
     profile_data = profile_response.json()
     assert profile_data["first_name"] == "john"
@@ -56,9 +59,13 @@ async def test_create_user_profile(e2e_client, e2e_db_session, settings, s3_clie
 
     avatar_key = f"avatars/{user.id}_avatar.jpg"
     expected_url = await s3_client.get_file_url(avatar_key)
-    assert profile_data["avatar"] == expected_url, f"Invalid avatar URL: {profile_data['avatar']}"
+    assert (
+        profile_data["avatar"] == expected_url
+    ), f"Invalid avatar URL: {profile_data['avatar']}"
 
-    profile_db = await e2e_db_session.scalar(select(UserProfileModel).where(UserProfileModel.user_id == user.id))
+    profile_db = await e2e_db_session.scalar(
+        select(UserProfileModel).where(UserProfileModel.user_id == user.id)
+    )
     assert profile_db, f"Profile for user {user.id} should exist!"
     assert profile_db.avatar, "Avatar path should not be empty!"
 
@@ -66,11 +73,10 @@ async def test_create_user_profile(e2e_client, e2e_db_session, settings, s3_clie
 
     storage = S3Client(settings)
     async with storage.session.client(
-            "s3", endpoint_url=storage.settings.S3_STORAGE_ENDPOINT
+        "s3", endpoint_url=storage.settings.S3_STORAGE_ENDPOINT
     ) as s3:
         response = await s3.list_objects_v2(
-            Bucket=settings.S3_BUCKET_NAME,
-            Prefix=avatar_key
+            Bucket=settings.S3_BUCKET_NAME, Prefix=avatar_key
         )
 
     assert "Contents" in response, f"Avatar {avatar_key} was not found in MinIO!"

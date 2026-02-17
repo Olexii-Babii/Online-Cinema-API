@@ -1,12 +1,16 @@
 from typing import Union
 
 import aioboto3
-from botocore.exceptions import HTTPClientError, NoCredentialsError, BotoCoreError, ClientError
+from botocore.exceptions import (
+    HTTPClientError,
+    NoCredentialsError,
+    ClientError,
+)
 
 from config.settings import Settings
 
 
-class S3Client():
+class S3Client:
     def __init__(self, settings: Settings):
         self.settings = settings
         self.session = aioboto3.Session(
@@ -14,14 +18,10 @@ class S3Client():
             aws_secret_access_key=settings.S3_STORAGE_SECRET_KEY,
         )
 
-    async def upload_image(
-            self,
-            file_name: str,
-            file_data: Union[bytes, bytearray]
-    ):
+    async def upload_image(self, file_name: str, file_data: Union[bytes, bytearray]):
         try:
             async with self.session.client(
-                    "s3", endpoint_url=self.settings.S3_STORAGE_ENDPOINT
+                "s3", endpoint_url=self.settings.S3_STORAGE_ENDPOINT
             ) as client:
                 try:
                     await client.head_bucket(Bucket=self.settings.S3_BUCKET_NAME)
